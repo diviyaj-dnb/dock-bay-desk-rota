@@ -1,10 +1,17 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, lazy, Suspense } from 'react';
 import { DayOfWeek } from './types';
 import { DaySelector } from './components/DaySelector';
 import { DeskLayoutMap } from './components/DeskLayoutMap';
-import { SpreadsheetView } from './components/SpreadsheetView';
-import { BookingModal } from './components/BookingModal';
-import { RulesModal } from './components/RulesModal';
+
+const SpreadsheetView = lazy(() =>
+  import('./components/SpreadsheetView').then((m) => ({ default: m.SpreadsheetView })),
+);
+const BookingModal = lazy(() =>
+  import('./components/BookingModal').then((m) => ({ default: m.BookingModal })),
+);
+const RulesModal = lazy(() =>
+  import('./components/RulesModal').then((m) => ({ default: m.RulesModal })),
+);
 import {
   Search,
   HelpCircle,
@@ -859,40 +866,53 @@ export default function App() {
               searchQuery={searchQuery}
             />
           ) : (
-            <SpreadsheetView
-              teamMembers={teamMembers}
-              bookings={currentWeekBookings}
-              desks={desks}
-              onCellClick={handleSpreadsheetCellClick}
-              day={activeDay}
-            />
+            <Suspense
+              fallback={
+                <div className="h-full w-full flex items-center justify-center bg-white rounded-2xl border border-slate-200">
+                  <Loader2 className="w-5 h-5 text-slate-400 animate-spin" />
+                </div>
+              }
+            >
+              <SpreadsheetView
+                teamMembers={teamMembers}
+                bookings={currentWeekBookings}
+                desks={desks}
+                onCellClick={handleSpreadsheetCellClick}
+                day={activeDay}
+              />
+            </Suspense>
           )}
         </div>
       </div>
 
-      {/* Booking modal */}
-      <BookingModal
-        isOpen={isModalOpen}
-        onClose={() => {
-          setIsModalOpen(false);
-          setModalMemberId(null);
-          setModalDeskId(null);
-        }}
-        day={activeDay}
-        weekId={activeWeek}
-        memberId={modalMemberId}
-        deskId={modalDeskId}
-        teamMembers={teamMembers}
-        desks={desks}
-        bookings={currentWeekBookings}
-        onSave={handleSaveBooking}
-        onDelete={handleDeleteBooking}
-      />
+      {/* Booking modal — lazy-loaded on first open */}
+      {isModalOpen && (
+        <Suspense fallback={null}>
+          <BookingModal
+            isOpen={isModalOpen}
+            onClose={() => {
+              setIsModalOpen(false);
+              setModalMemberId(null);
+              setModalDeskId(null);
+            }}
+            day={activeDay}
+            weekId={activeWeek}
+            memberId={modalMemberId}
+            deskId={modalDeskId}
+            teamMembers={teamMembers}
+            desks={desks}
+            bookings={currentWeekBookings}
+            onSave={handleSaveBooking}
+            onDelete={handleDeleteBooking}
+          />
+        </Suspense>
+      )}
 
-      <RulesModal
-        isOpen={isRulesOpen}
-        onClose={() => setIsRulesOpen(false)}
-      />
+      {isRulesOpen && (
+        <Suspense fallback={null}>
+          <RulesModal isOpen={isRulesOpen} onClose={() => setIsRulesOpen(false)} />
+        </Suspense>
+      )}
     </div>
   );
 }

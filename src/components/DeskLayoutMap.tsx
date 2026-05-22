@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { Desk, Booking, TeamMember, DayOfWeek } from '../types';
 import { ZoomIn, ZoomOut, Copy, RotateCcw, Check } from 'lucide-react';
-import floorPlanLandscape from '../assets/floor-plan.png';
-import floorPlanPortrait from '../assets/floor-plan-mobile.png';
+import floorPlanLandscape from '../assets/floor-plan.webp';
+import floorPlanPortrait from '../assets/floor-plan-mobile.webp';
 import { useIsMobile } from '../lib/hooks';
 
 type HotspotPos = { x: number; y: number; w: number; h: number };
@@ -555,6 +555,10 @@ export const DeskLayoutMap: React.FC<DeskLayoutMapProps> = ({
             <img
               src={imgSrc}
               alt="Office floor plan"
+              width={imgWidth}
+              height={imgHeight}
+              fetchPriority="high"
+              decoding="async"
               className="w-full h-full block select-none"
               draggable={false}
             />
