@@ -1,0 +1,28 @@
+{
+  "paints": [
+    {
+      "name": "first-paint",
+      "startTime": 256
+    },
+    {
+      "name": "first-contentful-paint",
+      "startTime": 300
+    }
+  ],
+  "domContentLoaded": 251.80000001192093,
+  "loadEvent": 253.5,
+  "floorPlanResources": [
+    {
+      "name": "dock-and-bay-logo-CXmTiqya.jpg",
+      "duration": 119.30000001192093,
+      "transferSize": 14041,
+      "startTime": 267.69999998807907
+    },
+    {
+      "name": "floor-plan-mobile-CcCC8yN3.webp",
+      "duration": 60.19999998807907,
+      "transferSize": 400278,
+      "startTime": 578.6000000238419
+    }
+  ]
+}

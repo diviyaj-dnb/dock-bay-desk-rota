@@ -322,7 +322,10 @@ export default function App() {
   };
 
   return (
-    <div className="h-screen w-screen flex flex-col bg-slate-100/50 overflow-hidden text-slate-800">
+    <div
+      className="w-screen flex flex-col bg-slate-100/50 overflow-hidden text-slate-800"
+      style={{ height: '100dvh' }}
+    >
       {/* Header: desktop only — premium minimal, single hairline border */}
       <header className="hidden md:flex bg-white border-b border-slate-200 px-8 py-4 items-center justify-between shrink-0 relative z-20">
         {/* Brand */}
@@ -629,7 +632,10 @@ export default function App() {
       </div>
 
       {/* Mobile-only header (hidden on md+) */}
-      <div className="md:hidden bg-white border-b border-slate-200 shrink-0">
+      <div
+        className="md:hidden bg-white border-b border-slate-200 shrink-0"
+        style={{ paddingTop: 'env(safe-area-inset-top)' }}
+      >
         {/* Brand row + identity chip */}
         <div className="flex items-center justify-between px-4 py-3 gap-2">
           <div className="flex items-center gap-2.5 min-w-0">

@@ -1,0 +1,106 @@
+{
+  "innerWidth": 390,
+  "innerHeight": 844,
+  "visualViewport": {
+    "width": 390,
+    "height": 844,
+    "offsetTop": 0
+  },
+  "documentScrollWidth": 390,
+  "documentClientWidth": 390,
+  "bodyOverflowX": false,
+  "rootRect": {
+    "x": 0,
+    "y": 0,
+    "width": 390,
+    "height": 844,
+    "top": 0,
+    "right": 390,
+    "bottom": 844,
+    "left": 0
+  },
+  "rootScrollHeight": 844,
+  "rootClientHeight": 844,
+  "headerRows": [
+    {
+      "rect": {
+        "x": 0,
+        "y": 0,
+        "width": 390,
+        "height": 60,
+        "top": 0,
+        "right": 390,
+        "bottom": 60,
+        "left": 0
+      },
+      "text": "DOCK & BAY\nDesk Rota\n?\nPick you",
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "overflows": false
+    },
+    {
+      "rect": {
+        "x": 0,
+        "y": 60,
+        "width": 390,
+        "height": 33.5,
+        "top": 60,
+        "right": 390,
+        "bottom": 93.5,
+        "left": 0
+      },
+      "text": "Saturday, 23 May 2026\n4\n/30\n2\n/5\n0\n0",
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "overflows": false
+    },
+    {
+      "rect": {
+        "x": 0,
+        "y": 93.5,
+        "width": 390,
+        "height": 63,
+        "top": 93.5,
+        "right": 390,
+        "bottom": 156.5,
+        "left": 0
+      },
+      "text": "Mon\n18\n4\nTue\n19\n10\nWed\n20\n12\nThu\n21\n19\nFri\n22\n3",
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "overflows": false
+    },
+    {
+      "rect": {
+        "x": 0,
+        "y": 156.5,
+        "width": 390,
+        "height": 45,
+        "top": 156.5,
+        "right": 390,
+        "bottom": 201.5,
+        "left": 0
+      },
+      "text": "May 18 \u2013 May 22, 2026",
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "overflows": false
+    }
+  ],
+  "floorPlanImg": {
+    "x": 14.484375,
+    "y": 202.5,
+    "width": 361.03125,
+    "height": 641.5,
+    "top": 202.5,
+    "right": 375.515625,
+    "bottom": 844,
+    "left": 14.484375
+  },
+  "floorPlanComplete": true,
+  "floorPlanNaturalSize": {
+    "w": 941,
+    "h": 1672
+  },
+  "allModals": []
+}

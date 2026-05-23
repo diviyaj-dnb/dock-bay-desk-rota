@@ -1,0 +1,66 @@
+{
+  "imgRect": {
+    "x": 5.5,
+    "y": 202.5,
+    "width": 400.984375,
+    "height": 712.5,
+    "top": 202.5,
+    "right": 406.484375,
+    "bottom": 915,
+    "left": 5.5
+  },
+  "viewportH": 915,
+  "viewportW": 412,
+  "hotspots": [
+    {
+      "id": "desk-1",
+      "relX": 0.43005494291392277,
+      "relY": 0.29178728070175436,
+      "visible": true
+    },
+    {
+      "id": "desk-2",
+      "relX": 0.43235397264544284,
+      "relY": 0.23699561403508773,
+      "visible": true
+    },
+    {
+      "id": "desk-3",
+      "relX": 0.43106807466001634,
+      "relY": 0.18478070175438596,
+      "visible": true
+    },
+    {
+      "id": "desk-4",
+      "relX": 0.43307485484939406,
+      "relY": 0.13107456140350876,
+      "visible": true
+    },
+    {
+      "id": "desk-5",
+      "relX": 0.4346530023769629,
+      "relY": 0.07607456140350877,
+      "visible": true
+    },
+    {
+      "id": "desk-6",
+      "relX": 0.5746600163659744,
+      "relY": 0.07548245614035087,
+      "visible": true
+    },
+    {
+      "id": "desk-7",
+      "relX": 0.5762576471963528,
+      "relY": 0.13197368421052633,
+      "visible": true
+    },
+    {
+      "id": "desk-8",
+      "relX": 0.5737637844367377,
+      "relY": 0.18469298245614035,
+      "visible": true
+    }
+  ],
+  "totalHotspots": 30,
+  "visibleHotspots": 30
+}

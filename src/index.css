@@ -18,6 +18,11 @@ body {
   font-family: var(--font-sans);
   background-color: #f7f9fc;
   color: #1e293b;
+  -webkit-tap-highlight-color: transparent;
+}
+
+button, a, [role="button"] {
+  touch-action: manipulation;
 }
 
 h1, h2, h3, h4 {
