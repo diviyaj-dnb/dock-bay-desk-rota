@@ -313,6 +313,9 @@ export const DeskLayoutMap: React.FC<DeskLayoutMapProps> = ({
     const isSearched = doesDeskMatchSearch(desk.id);
     const isActiveUserHere = !!activeMemberId && !!booking && booking.memberId === activeMemberId;
     const isEditing = showHotspots;
+    // Booked-but-not-currently-interactive: render a soft grey overlay so booked
+    // desks visually recede and vacant desks (full-colour desk mat) pop.
+    const isBooked = !!booking;
 
     return (
       <div
@@ -348,7 +351,9 @@ export const DeskLayoutMap: React.FC<DeskLayoutMapProps> = ({
                   ? 'ring-2 ring-slate-900/70 bg-white/15 scale-[1.04] shadow-md'
                   : isEditing
                     ? 'ring-1 ring-dashed ring-red-500/70 bg-red-500/10'
-                    : ''
+                    : isBooked
+                      ? 'bg-slate-900/25 ring-1 ring-slate-900/10'
+                      : ''
           }`}
           style={{ transformOrigin: 'center' }}
         />
