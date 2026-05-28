@@ -2,7 +2,7 @@ export type DayOfWeek = 'Monday' | 'Tuesday' | 'Wednesday' | 'Thursday' | 'Frida
 export type DeskType = 'regular' | 'design' | 'no-screen';
 export type BookingStatus = 'booked' | 'sofa_surf' | 'wfh';
 
-export interface Database {
+export type Database = {
   public: {
     Tables: {
       team_members: {
@@ -33,6 +33,7 @@ export interface Database {
           archived?: boolean;
           created_at?: string;
         };
+        Relationships: [];
       };
       desks: {
         Row: {
@@ -59,6 +60,7 @@ export interface Database {
           row?: number;
           col?: 'left' | 'right';
         };
+        Relationships: [];
       };
       bookings: {
         Row: {
@@ -94,7 +96,20 @@ export interface Database {
           created_at?: string;
           updated_at?: string;
         };
+        Relationships: [];
       };
     };
+    Views: {
+      [_ in never]: never;
+    };
+    Functions: {
+      [_ in never]: never;
+    };
+    Enums: {
+      [_ in never]: never;
+    };
+    CompositeTypes: {
+      [_ in never]: never;
+    };
   };
-}
+};

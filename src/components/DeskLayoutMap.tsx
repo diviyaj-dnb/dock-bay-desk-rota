@@ -178,7 +178,7 @@ export const DeskLayoutMap: React.FC<DeskLayoutMapProps> = ({
   };
 
   const copyPositions = async () => {
-    const lines = Object.entries(livePositions)
+    const lines = (Object.entries(livePositions) as [string, HotspotPos][])
       .sort((a, b) => Number(a[0]) - Number(b[0]))
       .map(
         ([id, p]) =>
