@@ -245,26 +245,19 @@ export const SpreadsheetView: React.FC<SpreadsheetViewProps> = ({
           {rowNum}
         </td>
 
-        {/* Name cell with designer badge or dog icon */}
+        {/* Name cell with avatar or dog icon */}
         <td className="px-3 font-semibold text-slate-800 h-8">
-          <div className="flex items-center justify-between w-full h-full gap-2">
-            <div className="truncate flex items-center gap-1.5">
-              {member.isDog ? (
-                <span className="text-xs">🐶</span>
-              ) : (
-                <span className="text-[10px] w-4.5 h-4.5 bg-slate-100 border border-slate-300 rounded-full flex items-center justify-center text-slate-500 font-bold font-mono">
-                  {member.name.split(' ').map((n) => n[0]).join('')}
-                </span>
-              )}
-              <span className={member.isDog ? "text-emerald-700 font-bold font-mono text-xs" : ""}>
-                {member.name}
-              </span>
-            </div>
-            {member.isDesigner && (
-              <span className="text-[7px] bg-rose-100 hover:bg-rose-200 text-rose-800 font-extrabold px-1 py-0.5 rounded leading-none border border-rose-300/40 uppercase scale-90">
-                Designer
+          <div className="flex items-center w-full h-full gap-1.5">
+            {member.isDog ? (
+              <span className="text-xs">🐶</span>
+            ) : (
+              <span className="text-[10px] w-4.5 h-4.5 bg-slate-100 border border-slate-300 rounded-full flex items-center justify-center text-slate-500 font-bold font-mono">
+                {member.name.split(' ').map((n) => n[0]).join('')}
               </span>
             )}
+            <span className={`truncate ${member.isDog ? 'text-emerald-700 font-bold font-mono text-xs' : ''}`}>
+              {member.name}
+            </span>
           </div>
         </td>
 

@@ -80,17 +80,6 @@ export default function App() {
   // Find current real-life Monday
   const today = useMemo(() => new Date(), []);
   const currentMondayStr = useMemo(() => getMondayDateString(today), [today]);
-  // UK-formatted "today" label, e.g. "Thursday, 21 May 2026"
-  const todayLabel = useMemo(
-    () =>
-      today.toLocaleDateString('en-GB', {
-        weekday: 'long',
-        day: 'numeric',
-        month: 'long',
-        year: 'numeric',
-      }),
-    [today],
-  );
 
   // Next Monday — used by the "Next week" jump button
   const nextMondayDateStr = useMemo(() => {
@@ -98,6 +87,14 @@ export default function App() {
     currentMondayDate.setDate(currentMondayDate.getDate() + 7);
     return getMondayDateString(currentMondayDate);
   }, [currentMondayStr]);
+
+  // Rolling 1-week window — next week only unlocks from Thursday 00:00 onwards
+  // (and on Sat/Sun, since at that point "this week" is functionally already over).
+  // Past weeks are never reachable.
+  const isNextWeekUnlocked = useMemo(() => {
+    const dow = today.getDay(); // 0=Sun, 1=Mon, ..., 6=Sat
+    return dow >= 4 || dow === 0;
+  }, [today]);
 
   // Always default to THIS week — user can click "Next week" if they want to book ahead.
   const [activeWeek, setActiveWeek] = useState<string>(currentMondayStr);
@@ -116,22 +113,35 @@ export default function App() {
     }, {} as Record<DayOfWeek, number>);
   }, [activeWeek]);
 
-  const handlePrevWeek = () => {
-    setActiveWeek((prev) => {
-      const parts = prev.split('-');
-      const d = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
-      d.setDate(d.getDate() - 7);
-      return getMondayDateString(d);
+  // Real calendar date for the SELECTED day of the SELECTED week — drives the
+  // header date label so it reflects "what am I looking at" rather than "today".
+  const selectedDateLabel = useMemo(() => {
+    const [y, m, d] = activeWeek.split('-').map(Number);
+    const monday = new Date(y, m - 1, d);
+    const dayIdx = (['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'] as DayOfWeek[]).indexOf(activeDay);
+    const selected = new Date(monday);
+    selected.setDate(monday.getDate() + dayIdx);
+    return selected.toLocaleDateString('en-GB', {
+      weekday: 'long',
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
     });
+  }, [activeWeek, activeDay]);
+
+  // Rolling 1-week navigation guards — past weeks are never reachable,
+  // next week only when isNextWeekUnlocked (Thu+).
+  const canGoPrev = activeWeek !== currentMondayStr;
+  const canGoNext = isNextWeekUnlocked && activeWeek === currentMondayStr;
+
+  const handlePrevWeek = () => {
+    if (!canGoPrev) return;
+    setActiveWeek(currentMondayStr);
   };
 
   const handleNextWeek = () => {
-    setActiveWeek((prev) => {
-      const parts = prev.split('-');
-      const d = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
-      d.setDate(d.getDate() + 7);
-      return getMondayDateString(d);
-    });
+    if (!canGoNext) return;
+    setActiveWeek(nextMondayDateStr);
   };
 
   const handleToThisWeek = () => {
@@ -139,6 +149,7 @@ export default function App() {
   };
 
   const handleToNextWeek = () => {
+    if (!isNextWeekUnlocked) return;
     setActiveWeek(nextMondayDateStr);
   };
 
@@ -568,7 +579,7 @@ export default function App() {
       <div className="hidden md:flex bg-white border-b border-slate-200 px-8 py-3 items-center justify-between shrink-0 z-10">
         <div className="flex items-center gap-1 text-xs text-slate-600">
           <span className="text-slate-700 font-medium tabular-nums px-2 py-1">
-            {todayLabel}
+            {selectedDateLabel}
           </span>
           <span className="w-px h-4 bg-slate-200 mx-2" />
           <span className="group flex items-center gap-1.5 px-2 py-1 rounded-md transition-colors hover:bg-slate-50">
@@ -599,8 +610,9 @@ export default function App() {
           <div className="flex items-center gap-0.5">
             <button
               onClick={handlePrevWeek}
-              className="p-1.5 hover:bg-slate-100 rounded-md text-slate-500 hover:text-slate-900 transition-all duration-150 cursor-pointer active:scale-90"
-              title="Previous week"
+              disabled={!canGoPrev}
+              className="p-1.5 hover:bg-slate-100 rounded-md text-slate-500 hover:text-slate-900 transition-all duration-150 active:scale-90 disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-slate-500 enabled:cursor-pointer"
+              title={canGoPrev ? 'Back to this week' : 'Past weeks are locked'}
               aria-label="Previous week"
             >
               <ChevronLeft className="w-4 h-4" />
@@ -610,8 +622,9 @@ export default function App() {
             </span>
             <button
               onClick={handleNextWeek}
-              className="p-1.5 hover:bg-slate-100 rounded-md text-slate-500 hover:text-slate-900 transition-all duration-150 cursor-pointer active:scale-90"
-              title="Next week"
+              disabled={!canGoNext}
+              className="p-1.5 hover:bg-slate-100 rounded-md text-slate-500 hover:text-slate-900 transition-all duration-150 active:scale-90 disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-slate-500 enabled:cursor-pointer"
+              title={canGoNext ? 'Next week' : 'Next week unlocks Thursday'}
               aria-label="Next week"
             >
               <ChevronRight className="w-4 h-4" />
@@ -631,10 +644,12 @@ export default function App() {
             </button>
             <button
               onClick={handleToNextWeek}
-              className={`px-2.5 py-1 rounded-md font-medium transition-all duration-150 cursor-pointer active:scale-[0.97] ${
+              disabled={!isNextWeekUnlocked}
+              title={isNextWeekUnlocked ? 'Jump to next week' : 'Next week unlocks Thursday'}
+              className={`px-2.5 py-1 rounded-md font-medium transition-all duration-150 active:scale-[0.97] disabled:opacity-40 disabled:cursor-not-allowed enabled:cursor-pointer ${
                 activeWeek === nextMondayDateStr
                   ? 'text-white bg-[#f3705a] shadow-sm'
-                  : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'
+                  : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50 disabled:hover:bg-transparent disabled:hover:text-slate-500'
               }`}
             >
               Next week
@@ -722,7 +737,7 @@ export default function App() {
 
         {/* Stats + date compact, horizontally scrollable */}
         <div className="px-4 py-2 flex items-center gap-3 text-[11px] text-slate-600 overflow-x-auto border-t border-slate-100 scrollbar-none">
-          <span className="text-slate-700 font-medium whitespace-nowrap tabular-nums">{todayLabel}</span>
+          <span className="text-slate-700 font-medium whitespace-nowrap tabular-nums">{selectedDateLabel}</span>
           <span className="w-px h-3 bg-slate-200 shrink-0" />
           <span className="flex items-center gap-1 whitespace-nowrap">
             <Monitor className="w-3 h-3 text-slate-400" />
@@ -772,7 +787,8 @@ export default function App() {
         <div className="px-3 py-2 border-t border-slate-100 flex items-center justify-between">
           <button
             onClick={handlePrevWeek}
-            className="p-1.5 hover:bg-slate-100 rounded-md text-slate-500 active:scale-90 transition-all"
+            disabled={!canGoPrev}
+            className="p-1.5 hover:bg-slate-100 rounded-md text-slate-500 active:scale-90 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
             aria-label="Previous week"
           >
             <ChevronLeft className="w-4 h-4" />
@@ -782,7 +798,8 @@ export default function App() {
           </span>
           <button
             onClick={handleNextWeek}
-            className="p-1.5 hover:bg-slate-100 rounded-md text-slate-500 active:scale-90 transition-all"
+            disabled={!canGoNext}
+            className="p-1.5 hover:bg-slate-100 rounded-md text-slate-500 active:scale-90 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
             aria-label="Next week"
           >
             <ChevronRight className="w-4 h-4" />
