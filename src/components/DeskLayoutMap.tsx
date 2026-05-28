@@ -25,46 +25,46 @@ interface DeskLayoutMapProps {
 // Both are calibrated visually with the in-app Hot/drag/resize tool when Hot is on.
 const LANDSCAPE_HOTSPOTS: Record<number, HotspotPos> = {
   // TABLE A (left, 10 desks, 5 rows × 2 cols)
-  5:  { x: 17.90, y: 23.58, w: 4.93, h: 10.69 }, // no-screen top
-  6:  { x: 25.47, y: 23.66, w: 5.12, h: 10.46 }, // no-screen top
-  4:  { x: 17.83, y: 35.71, w: 4.98, h: 10.22 },
-  7:  { x: 25.47, y: 35.90, w: 4.97, h: 10.29 },
-  3:  { x: 17.76, y: 47.85, w: 5.21, h: 10.31 },
-  8:  { x: 25.35, y: 47.77, w: 5.14, h: 10.12 }, // design
-  2:  { x: 17.56, y: 59.58, w: 5.20, h: 10.12 },
-  9:  { x: 25.27, y: 59.57, w: 5.37, h: 9.95 },
-  1:  { x: 17.61, y: 71.71, w: 5.16, h: 10.72 },
-  10: { x: 25.33, y: 71.73, w: 5.12, h: 10.77 },
+  5:  { x: 17.85, y: 23.56, w: 5.33, h: 10.85 }, // no-screen top
+  6:  { x: 25.48, y: 23.69, w: 5.29, h: 11.02 }, // no-screen top
+  4:  { x: 17.80, y: 35.98, w: 5.39, h: 10.13 },
+  7:  { x: 25.47, y: 36.04, w: 5.37, h: 10.79 },
+  3:  { x: 17.74, y: 47.94, w: 5.47, h: 10.61 },
+  8:  { x: 25.40, y: 47.97, w: 5.25, h: 10.52 }, // design
+  2:  { x: 17.67, y: 59.73, w: 5.42, h: 10.42 },
+  9:  { x: 25.33, y: 59.78, w: 5.49, h: 10.37 },
+  1:  { x: 17.63, y: 71.71, w: 5.18, h: 10.72 },
+  10: { x: 25.41, y: 71.75, w: 5.27, h: 10.81 },
 
   // TABLE B (middle, 8 desks, 4 rows × 2 cols)
-  14: { x: 46.85, y: 27.44, w: 5.11, h: 11.15 }, // no-screen top
-  15: { x: 54.44, y: 27.29, w: 5.25, h: 10.95 }, // no-screen top
-  13: { x: 46.74, y: 39.90, w: 5.14, h: 10.31 },
-  16: { x: 54.47, y: 39.68, w: 5.13, h: 10.38 }, // design
-  12: { x: 46.80, y: 52.18, w: 5.22, h: 10.68 }, // design
-  17: { x: 54.52, y: 52.07, w: 5.21, h: 10.76 },
-  11: { x: 46.75, y: 64.65, w: 5.20, h: 10.89 },
-  18: { x: 54.49, y: 64.89, w: 5.12, h: 11.12 }, // design
+  14: { x: 46.72, y: 27.25, w: 5.23, h: 11.64 }, // no-screen top
+  15: { x: 54.43, y: 27.23, w: 5.49, h: 11.41 }, // no-screen top
+  13: { x: 46.73, y: 39.69, w: 5.32, h: 10.76 },
+  16: { x: 54.47, y: 39.69, w: 5.51, h: 10.78 }, // design
+  12: { x: 46.81, y: 51.88, w: 5.31, h: 11.33 }, // design
+  17: { x: 54.43, y: 52.07, w: 5.55, h: 11.27 },
+  11: { x: 46.73, y: 64.86, w: 5.32, h: 11.28 },
+  18: { x: 54.50, y: 64.88, w: 5.50, h: 11.29 }, // design
 
   // TABLE C (right, 12 desks, 6 rows × 2 cols)
-  24: { x: 76.93, y: 19.38, w: 5.11, h: 10.71 }, // no-screen top
-  25: { x: 84.56, y: 19.16, w: 4.97, h: 10.47 }, // no-screen top
-  23: { x: 76.98, y: 31.19, w: 5.07, h: 9.88 }, // no-screen
-  26: { x: 84.71, y: 31.39, w: 5.08, h: 9.76 },
-  22: { x: 77.06, y: 42.90, w: 5.28, h: 10.22 },
-  27: { x: 84.74, y: 43.13, w: 5.02, h: 9.86 },
-  21: { x: 77.14, y: 54.99, w: 5.05, h: 10.11 }, // design
-  28: { x: 84.81, y: 55.26, w: 5.15, h: 10.07 },
-  20: { x: 77.17, y: 67.19, w: 5.06, h: 10.01 },
-  29: { x: 84.97, y: 67.47, w: 5.29, h: 10.19 },
-  19: { x: 77.28, y: 79.70, w: 5.42, h: 11.17 },
-  30: { x: 85.05, y: 79.84, w: 5.18, h: 10.88 },
+  24: { x: 76.92, y: 19.11, w: 5.44, h: 10.94 }, // no-screen top
+  25: { x: 84.51, y: 19.25, w: 5.53, h: 11.09 }, // no-screen top
+  23: { x: 76.94, y: 31.12, w: 5.43, h: 10.69 }, // no-screen
+  26: { x: 84.58, y: 31.19, w: 5.48, h: 10.57 },
+  22: { x: 77.04, y: 42.94, w: 5.46, h: 10.90 },
+  27: { x: 84.71, y: 43.26, w: 5.56, h: 10.71 },
+  21: { x: 77.03, y: 55.15, w: 5.41, h: 10.52 }, // design
+  28: { x: 84.78, y: 55.32, w: 5.56, h: 10.72 },
+  20: { x: 77.12, y: 67.35, w: 5.43, h: 10.57 },
+  29: { x: 84.97, y: 67.30, w: 5.59, h: 10.86 },
+  19: { x: 77.20, y: 79.86, w: 5.50, h: 11.68 },
+  30: { x: 85.07, y: 80.00, w: 5.57, h: 11.39 },
 };
 
 // Pup-bed clickable hotspot — same HotspotPos shape as desks so it can be
 // calibrated with the in-app Hot tool (sentinel id 0 in livePositions below).
 // Click opens the booking modal in "pup-booking" mode (dogs only, no desk).
-const PUP_BED_LANDSCAPE: HotspotPos = { x: 50.33, y: 87.96, w: 7.62, h: 7.56 };
+const PUP_BED_LANDSCAPE: HotspotPos = { x: 50.43, y: 88.02, w: 7.81, h: 7.81 };
 const PUP_BED_PORTRAIT: HotspotPos = { x: 82.0, y: 49.0, w: 14.0, h: 10.0 };
 
 // Portrait hotspots — calibrated visually with the in-app Hot tool against floor-plan-mobile.png.
@@ -352,7 +352,7 @@ export const DeskLayoutMap: React.FC<DeskLayoutMapProps> = ({
                   : isEditing
                     ? 'ring-1 ring-dashed ring-red-500/70 bg-red-500/10'
                     : isBooked
-                      ? 'bg-slate-900/25 ring-1 ring-slate-900/10'
+                      ? 'bg-slate-900/45 ring-1 ring-slate-900/20'
                       : ''
           }`}
           style={{ transformOrigin: 'center' }}
@@ -376,21 +376,35 @@ export const DeskLayoutMap: React.FC<DeskLayoutMapProps> = ({
           </span>
         </div>
 
-        {/* Occupant chip — first name on desktop, 2-letter initials on the tighter mobile desks */}
-        {!isEditing && member && !member.isDog && (
-          <div className="absolute inset-x-1 bottom-1 flex items-end justify-center pointer-events-none">
-            <span className="px-1.5 py-0.5 text-[9px] font-semibold text-slate-900 bg-white/90 rounded backdrop-blur-sm shadow-sm truncate max-w-full leading-tight tabular-nums">
-              {isMobile
-                ? member.name
-                    .split(' ')
-                    .map((p) => p[0])
-                    .join('')
-                    .slice(0, 2)
-                    .toUpperCase()
-                : member.name.split(' ')[0]}
-            </span>
-          </div>
-        )}
+        {/* Occupant pill — avatar circle (initials) + first name, centered on the desk.
+            More substantial than a plain text chip so booked desks read as occupied at a glance. */}
+        {!isEditing && member && !member.isDog && (() => {
+          const initials = member.name
+            .split(' ')
+            .map((p) => p[0])
+            .join('')
+            .slice(0, 2)
+            .toUpperCase();
+          const firstName = member.name.split(' ')[0];
+          return (
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none px-1">
+              <div className={`flex items-center gap-1 bg-white/95 backdrop-blur-sm rounded-full pl-0.5 pr-1.5 py-0.5 shadow-md ring-1 ${
+                isActiveUserHere ? 'ring-slate-900/50' : 'ring-slate-900/15'
+              }`}>
+                <div className={`w-4 h-4 shrink-0 rounded-full flex items-center justify-center text-[7px] font-bold leading-none ${
+                  isActiveUserHere ? 'bg-[#f3705a] text-white' : 'bg-slate-900 text-white'
+                }`}>
+                  {initials}
+                </div>
+                {!isMobile && (
+                  <span className="text-[9px] font-semibold text-slate-900 truncate leading-none max-w-[60px]">
+                    {firstName}
+                  </span>
+                )}
+              </div>
+            </div>
+          );
+        })()}
 
         {/* Tooltip on hover (suppressed during calibration) */}
         {isHovered && !isEditing && (
