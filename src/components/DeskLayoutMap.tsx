@@ -388,7 +388,7 @@ export const DeskLayoutMap: React.FC<DeskLayoutMapProps> = ({
             .toUpperCase();
           return (
             <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-              <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold leading-none shadow-md ring-2 ring-white ${
+              <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[8px] font-bold leading-none shadow-md ring-2 ring-white ${
                 isActiveUserHere ? 'bg-[#f3705a] text-white' : 'bg-slate-900 text-white'
               }`}>
                 {initials}
