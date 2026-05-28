@@ -546,18 +546,25 @@ export const DeskLayoutMap: React.FC<DeskLayoutMapProps> = ({
                     </span>
                   </div>
                   {isHovered && !isEditing && (
-                    <div className="absolute left-1/2 -translate-x-1/2 -top-2 -translate-y-full bg-slate-900 text-white text-xs px-3 py-2 rounded-lg shadow-xl z-50 pointer-events-none w-48">
-                      <div className="flex items-center justify-between border-b border-slate-700 pb-1.5 mb-1.5">
-                        <span className="font-semibold">Pup bed</span>
-                        <span className="text-[9px] text-slate-400 uppercase tracking-wider">Dogs only</span>
-                      </div>
+                    <div className="absolute left-1/2 -translate-x-1/2 -top-2 -translate-y-full bg-slate-900 text-white rounded-lg shadow-xl z-50 pointer-events-none whitespace-nowrap px-2.5 py-1.5">
                       {bookedDogs.length > 0 ? (
-                        <p className="text-[11px] text-slate-200">
-                          {bookedDogs.map((d) => d.name).join(', ')} here today
-                        </p>
+                        <>
+                          <p className="text-[11px] font-semibold leading-tight">
+                            {bookedDogs.map((d) => d.name).join(', ')}
+                          </p>
+                          <p className="text-[9px] text-slate-400 leading-tight mt-0.5">
+                            Pup bed · click to manage
+                          </p>
+                        </>
                       ) : (
-                        <p className="text-[11px] text-slate-400">Click to book a pup</p>
+                        <>
+                          <p className="text-[11px] font-semibold leading-tight">Pup bed</p>
+                          <p className="text-[9px] text-slate-400 leading-tight mt-0.5">
+                            <span className="text-emerald-400">Vacant</span> · click to book a pup
+                          </p>
+                        </>
                       )}
+                      <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-2.5 h-2.5 bg-slate-900 rotate-45" />
                     </div>
                   )}
                 </div>
