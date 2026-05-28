@@ -376,8 +376,9 @@ export const DeskLayoutMap: React.FC<DeskLayoutMapProps> = ({
           </span>
         </div>
 
-        {/* Occupant pill — avatar circle (initials) + first name, centered on the desk.
-            More substantial than a plain text chip so booked desks read as occupied at a glance. */}
+        {/* Occupant avatar — round circle with 2-letter initials, centered on the desk.
+            Initials-only (no name text) so every desk reads consistently regardless of
+            name length. Full name is in the hover tooltip below. */}
         {!isEditing && member && !member.isDog && (() => {
           const initials = member.name
             .split(' ')
@@ -385,22 +386,12 @@ export const DeskLayoutMap: React.FC<DeskLayoutMapProps> = ({
             .join('')
             .slice(0, 2)
             .toUpperCase();
-          const firstName = member.name.split(' ')[0];
           return (
-            <div className="absolute inset-0 flex items-center justify-center pointer-events-none px-1">
-              <div className={`flex items-center gap-1 bg-white/95 backdrop-blur-sm rounded-full pl-0.5 pr-1.5 py-0.5 shadow-md ring-1 ${
-                isActiveUserHere ? 'ring-slate-900/50' : 'ring-slate-900/15'
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+              <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold leading-none shadow-md ring-2 ring-white ${
+                isActiveUserHere ? 'bg-[#f3705a] text-white' : 'bg-slate-900 text-white'
               }`}>
-                <div className={`w-4 h-4 shrink-0 rounded-full flex items-center justify-center text-[7px] font-bold leading-none ${
-                  isActiveUserHere ? 'bg-[#f3705a] text-white' : 'bg-slate-900 text-white'
-                }`}>
-                  {initials}
-                </div>
-                {!isMobile && (
-                  <span className="text-[9px] font-semibold text-slate-900 truncate leading-none max-w-[60px]">
-                    {firstName}
-                  </span>
-                )}
+                {initials}
               </div>
             </div>
           );
@@ -625,8 +616,10 @@ export const DeskLayoutMap: React.FC<DeskLayoutMapProps> = ({
               </div>
             )}
 
-            {/* Pup-bed live indicator — names floating on the bed */}
-            {bookedDogs.length > 0 && livePositions[0] && (
+            {/* Pup-bed live indicator — names floating on the bed.
+                Hidden by default (would block the dog photo); appears on hover only.
+                The pup-bed hotspot tooltip also shows the names. */}
+            {bookedDogs.length > 0 && livePositions[0] && hoveredDesk === 0 && (
               <div
                 className="absolute -translate-x-1/2 -translate-y-1/2 pointer-events-none"
                 style={{ left: `${livePositions[0].x}%`, top: `${livePositions[0].y}%` }}
