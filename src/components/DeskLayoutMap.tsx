@@ -389,7 +389,7 @@ export const DeskLayoutMap: React.FC<DeskLayoutMapProps> = ({
           );
         })() : (
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-            <span className="text-[11px] font-semibold text-slate-700/80 leading-none tabular-nums">
+            <span className="text-[11px] font-semibold text-slate-900 leading-none tabular-nums">
               {desk.number}
             </span>
           </div>
