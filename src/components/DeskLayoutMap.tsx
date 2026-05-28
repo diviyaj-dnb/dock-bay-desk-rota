@@ -369,9 +369,12 @@ export const DeskLayoutMap: React.FC<DeskLayoutMapProps> = ({
           />
         )}
 
-        {/* Always-visible desk number (top-left corner) */}
-        <div className="absolute top-0.5 left-0.5 pointer-events-none">
-          <span className="inline-flex items-center justify-center text-[9px] font-semibold text-slate-900 bg-white/85 backdrop-blur-sm rounded px-1 py-0.5 leading-none tabular-nums shadow-sm">
+        {/* Desk number — bare in the corner, no pill. White on booked (dark overlay),
+            slate on vacant (blue desk mat). */}
+        <div className="absolute top-1 left-1.5 pointer-events-none">
+          <span className={`text-[11px] font-bold leading-none tabular-nums ${
+            isBooked ? 'text-white' : 'text-slate-700'
+          }`}>
             {desk.number}
           </span>
         </div>
