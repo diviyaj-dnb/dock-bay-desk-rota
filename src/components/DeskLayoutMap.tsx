@@ -395,33 +395,29 @@ export const DeskLayoutMap: React.FC<DeskLayoutMapProps> = ({
           </div>
         )}
 
-        {/* Tooltip on hover (suppressed during calibration) */}
+        {/* Tooltip on hover (suppressed during calibration) — compact 2-line pill */}
         {isHovered && !isEditing && (
-          <div className="absolute left-1/2 -translate-x-1/2 -top-2 -translate-y-full bg-slate-900 text-white text-xs px-3 py-2 rounded-lg shadow-xl z-50 pointer-events-none w-48">
-            <div className="flex items-center justify-between border-b border-slate-700 pb-1.5 mb-1.5">
-              <span className="font-semibold">Desk {desk.number}</span>
-              <span className="text-[9px] text-slate-400 uppercase tracking-wider">
-                {desk.type === 'design' ? 'Design' : desk.type === 'no-screen' ? 'No screen' : 'Regular'}
-              </span>
-            </div>
+          <div className="absolute left-1/2 -translate-x-1/2 -top-2 -translate-y-full bg-slate-900 text-white rounded-lg shadow-xl z-50 pointer-events-none whitespace-nowrap px-2.5 py-1.5">
             {booking ? (
-              <div className="space-y-1">
-                <p className="font-medium text-white text-sm leading-tight">{member?.name}</p>
-                <div className="flex items-center justify-between text-[10px]">
-                  <span className="text-slate-400">Occupied</span>
-                  <span className="text-slate-300">Click to edit</span>
-                </div>
-              </div>
+              <>
+                <p className="text-[11px] font-semibold leading-tight">{member?.name}</p>
+                <p className="text-[9px] text-slate-400 leading-tight mt-0.5">
+                  Desk {desk.number} · click to edit
+                </p>
+              </>
             ) : (
-              <div className="space-y-1">
-                <p className="text-slate-300 text-xs">Vacant</p>
-                <div className="flex items-center justify-between text-[10px]">
-                  <span className="text-emerald-400">Available</span>
-                  <span className="text-slate-300">Click to book</span>
-                </div>
-              </div>
+              <>
+                <p className="text-[11px] font-semibold leading-tight">Desk {desk.number}</p>
+                <p className="text-[9px] text-slate-400 leading-tight mt-0.5">
+                  <span className="text-emerald-400">Vacant</span>
+                  {desk.type !== 'regular' && (
+                    <> · {desk.type === 'design' ? 'Design' : 'No screen'}</>
+                  )}
+                  {' · click to book'}
+                </p>
+              </>
             )}
-            <div className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-3 h-3 bg-slate-900 rotate-45" />
+            <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-2.5 h-2.5 bg-slate-900 rotate-45" />
           </div>
         )}
       </div>
