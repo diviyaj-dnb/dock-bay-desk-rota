@@ -64,7 +64,7 @@ const LANDSCAPE_HOTSPOTS: Record<number, HotspotPos> = {
 // Pup-bed clickable hotspot — same HotspotPos shape as desks so it can be
 // calibrated with the in-app Hot tool (sentinel id 0 in livePositions below).
 // Click opens the booking modal in "pup-booking" mode (dogs only, no desk).
-const PUP_BED_LANDSCAPE: HotspotPos = { x: 50.32, y: 88.49, w: 7.60, h: 8.60 };
+const PUP_BED_LANDSCAPE: HotspotPos = { x: 50.33, y: 87.96, w: 7.62, h: 7.56 };
 const PUP_BED_PORTRAIT: HotspotPos = { x: 82.0, y: 49.0, w: 14.0, h: 10.0 };
 
 // Portrait hotspots — calibrated visually with the in-app Hot tool against floor-plan-mobile.png.
