@@ -14,6 +14,10 @@ interface BookingModalProps {
   bookings: Booking[];
   onSave: (memberId: string, day: DayOfWeek, deskId: number | null, status: 'booked' | 'sofa_surf' | 'wfh') => void;
   onDelete: (memberId: string, day: DayOfWeek) => void;
+  // When true, the modal was opened from the pup-bed hotspot — picker is
+  // filtered to dogs only, status buttons + desk grid are hidden, and save
+  // is forced to ('booked', desk_id=null).
+  pupBookingMode?: boolean;
 }
 
 // Compute the actual calendar date for a given (weekId, day) pair and format it
@@ -49,6 +53,7 @@ export const BookingModal: React.FC<BookingModalProps> = ({
   bookings,
   onSave,
   onDelete,
+  pupBookingMode = false,
 }) => {
   const [selectedMemberId, setSelectedMemberId] = useState<string>('');
   const [bookingStatus, setBookingStatus] = useState<'booked' | 'sofa_surf' | 'wfh'>('booked');
@@ -152,9 +157,14 @@ export const BookingModal: React.FC<BookingModalProps> = ({
       >
         {/* Header */}
         <div className="px-6 py-5 border-b border-slate-200 flex items-center justify-between">
-          <div>
-            <h3 className="text-base font-semibold text-slate-900 tracking-tight">Manage booking</h3>
-            <p className="text-xs text-slate-500 mt-0.5 tabular-nums">{dateLabelFor(weekId, day)}</p>
+          <div className="flex items-center gap-2">
+            {pupBookingMode && <PawPrint className="w-4 h-4 text-amber-600" />}
+            <div>
+              <h3 className="text-base font-semibold text-slate-900 tracking-tight">
+                {pupBookingMode ? 'Book the pup bed' : 'Manage booking'}
+              </h3>
+              <p className="text-xs text-slate-500 mt-0.5 tabular-nums">{dateLabelFor(weekId, day)}</p>
+            </div>
           </div>
           <button
             onClick={onClose}

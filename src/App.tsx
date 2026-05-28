@@ -181,6 +181,9 @@ export default function App() {
   const [isRulesOpen, setIsRulesOpen] = useState<boolean>(false);
   const [modalMemberId, setModalMemberId] = useState<string | null>(null);
   const [modalDeskId, setModalDeskId] = useState<number | null>(null);
+  // When true, the modal is opened from the pup-bed hotspot — picker is filtered
+  // to dogs, desk grid is hidden, save is forced to status='booked' / desk_id=null.
+  const [isPupBookingMode, setIsPupBookingMode] = useState<boolean>(false);
 
   // Header dropdowns
   const [teamOpen, setTeamOpen] = useState<boolean>(false);
@@ -274,6 +277,15 @@ export default function App() {
       setModalMemberId(activeMemberId);
       setModalDeskId(deskId);
     }
+    setIsModalOpen(true);
+  };
+
+  // Handler for clicking the pup-bed hotspot — opens modal in dog-only booking mode
+  const handlePupBedClick = () => {
+    const activeMemberIsDog = teamMembers.find((m) => m.id === activeMemberId)?.isDog;
+    setModalMemberId(activeMemberIsDog ? activeMemberId : null);
+    setModalDeskId(null);
+    setIsPupBookingMode(true);
     setIsModalOpen(true);
   };
 
@@ -869,6 +881,7 @@ export default function App() {
               teamMembers={teamMembers}
               activeMemberId={activeMemberId}
               onDeskClick={handleDeskClick}
+              onPupBedClick={handlePupBedClick}
               searchQuery={searchQuery}
             />
           ) : (
@@ -900,6 +913,7 @@ export default function App() {
               setIsModalOpen(false);
               setModalMemberId(null);
               setModalDeskId(null);
+              setIsPupBookingMode(false);
             }}
             day={activeDay}
             weekId={activeWeek}
@@ -910,6 +924,7 @@ export default function App() {
             bookings={currentWeekBookings}
             onSave={handleSaveBooking}
             onDelete={handleDeleteBooking}
+            pupBookingMode={isPupBookingMode}
           />
         </Suspense>
       )}
