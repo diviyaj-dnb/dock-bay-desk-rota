@@ -915,6 +915,11 @@ export default function App() {
                 desks={desks}
                 onCellClick={handleSpreadsheetCellClick}
                 day={activeDay}
+                activeWeek={activeWeek}
+                currentMondayStr={currentMondayStr}
+                nextMondayDateStr={nextMondayDateStr}
+                isNextWeekUnlocked={isNextWeekUnlocked}
+                onWeekChange={setActiveWeek}
               />
             </Suspense>
           )}
