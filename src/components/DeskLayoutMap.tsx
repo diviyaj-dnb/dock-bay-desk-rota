@@ -369,17 +369,9 @@ export const DeskLayoutMap: React.FC<DeskLayoutMapProps> = ({
           />
         )}
 
-        {/* Always-visible desk number (top-left corner) */}
-        <div className="absolute top-0.5 left-0.5 pointer-events-none">
-          <span className="inline-flex items-center justify-center text-[8px] font-semibold text-slate-900 bg-white/85 backdrop-blur-sm rounded px-1 py-0.5 leading-none tabular-nums shadow-sm">
-            {desk.number}
-          </span>
-        </div>
-
-        {/* Occupant avatar — round circle with 2-letter initials, centered on the desk.
-            Initials-only (no name text) so every desk reads consistently regardless of
-            name length. Full name is in the hover tooltip below. */}
-        {!isEditing && member && !member.isDog && (() => {
+        {/* Centered slot: avatar when booked, desk number when vacant.
+            Seat-map pattern — each desk is self-describing without floating UI stickers. */}
+        {!isEditing && member && !member.isDog ? (() => {
           const initials = member.name
             .split(' ')
             .map((p) => p[0])
@@ -395,7 +387,13 @@ export const DeskLayoutMap: React.FC<DeskLayoutMapProps> = ({
               </div>
             </div>
           );
-        })()}
+        })() : (
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+            <span className="text-[13px] font-semibold text-slate-700/80 leading-none tabular-nums">
+              {desk.number}
+            </span>
+          </div>
+        )}
 
         {/* Tooltip on hover (suppressed during calibration) */}
         {isHovered && !isEditing && (
