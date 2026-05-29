@@ -22,7 +22,6 @@ export const DaySelector: React.FC<DaySelectorProps> = ({
         {DAYS.map((day) => {
           const isActive = day === activeDay;
           const count = bookingsByDay[day] || 0;
-          const date = datesByDay[day];
 
           return (
             <button
@@ -35,16 +34,7 @@ export const DaySelector: React.FC<DaySelectorProps> = ({
                   : 'text-slate-500 hover:text-slate-900'
               }`}
             >
-              <span className="flex items-baseline gap-1 leading-none">
-                <span>{day.slice(0, 3)}</span>
-                <span
-                  className={`text-[10px] font-medium tabular-nums ${
-                    isActive ? 'text-slate-500' : 'text-slate-400'
-                  }`}
-                >
-                  {date}
-                </span>
-              </span>
+              <span className="leading-none">{day.slice(0, 3)}</span>
               <span
                 className={`text-[9px] mt-1 px-1.5 rounded-full font-medium tabular-nums transition-colors ${
                   isActive
