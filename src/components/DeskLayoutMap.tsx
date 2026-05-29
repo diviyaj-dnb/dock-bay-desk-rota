@@ -437,24 +437,6 @@ export const DeskLayoutMap: React.FC<DeskLayoutMapProps> = ({
           </p>
         </div>
 
-        <div className="flex flex-wrap gap-1 text-[11px] font-medium text-slate-600">
-          <div className="flex items-center gap-1.5 px-2 py-1">
-            <div className="w-2 h-2 rounded-sm bg-[#a3dbf5] border border-[#7bbada]" />
-            <span>Regular</span>
-          </div>
-          <div className="flex items-center gap-1.5 px-2 py-1">
-            <div className="w-2 h-2 rounded-sm bg-[#fbb9ad] border border-[#e48f82]" />
-            <span>Design</span>
-          </div>
-          <div className="flex items-center gap-1.5 px-2 py-1">
-            <div className="w-2 h-2 rounded-sm bg-white border border-slate-300" />
-            <span>No screen</span>
-          </div>
-          <div className="flex items-center gap-1.5 px-2 py-1">
-            <div className="w-2 h-2 rounded-sm bg-emerald-100 border border-emerald-400" />
-            <span>Pup</span>
-          </div>
-        </div>
       </div>
 
       {/* Floor plan image with hotspot overlays */}
