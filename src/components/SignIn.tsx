@@ -3,10 +3,10 @@ import { supabase } from '../lib/supabase';
 import logoUrl from '../assets/dock-and-bay-logo.jpg';
 import backdropUrl from '../assets/login-backdrop.webp';
 
-// Premium split-screen sign-in. Left: editorial brand hero photo (desktop) /
-// hero banner (mobile). Right: warm sign-in panel with the Dock & Bay
-// diagonal-stripe signature. Single "Continue with Google" button — Supabase
-// redirects back to this origin and useSession() picks up the session.
+// Split-screen sign-in. Left: full-bleed Dock & Bay brand photo (no overlay).
+// Right: a clean, precisely-spaced sign-in panel. Single "Continue with
+// Google" button — Supabase redirects back to this origin and useSession()
+// picks up the session.
 export const SignIn: React.FC<{ domainError?: boolean; onDismissDomainError?: () => void }> = ({
   domainError = false,
   onDismissDomainError,
@@ -36,82 +36,64 @@ export const SignIn: React.FC<{ domainError?: boolean; onDismissDomainError?: ()
 
   return (
     <div className="min-h-[100dvh] w-full flex flex-col md:flex-row bg-[#faf7f2]">
-      {/* ── Brand hero ─────────────────────────────────────────────
-          Desktop: left half, full height. Mobile: top banner. */}
-      <div className="relative h-44 sm:h-56 md:h-auto md:w-[52%] lg:w-[55%] overflow-hidden shrink-0">
+      {/* ── Brand photo ── desktop: left half · mobile: top hero ── */}
+      <div className="relative h-[34vh] min-h-[200px] sm:h-[40vh] md:h-auto md:w-[52%] lg:w-[56%] overflow-hidden shrink-0 bg-[#cfe6f5]">
         <img
           src={backdropUrl}
-          alt="Dock & Bay"
+          alt="Dock & Bay quick-dry towels"
           className="absolute inset-0 w-full h-full object-cover db-kenburns"
+          style={{ objectPosition: '55% 52%' }}
           fetchPriority="high"
         />
-        {/* Warm editorial scrim — deeper at the bottom for the tagline */}
-        <div className="absolute inset-0 bg-gradient-to-t from-[#192434]/80 via-[#192434]/15 to-transparent" />
-        <div className="absolute inset-0 bg-gradient-to-br from-[#f3705a]/10 to-transparent mix-blend-multiply" />
-
-        {/* Top-left wordmark on the photo */}
-        <div className="absolute top-5 left-5 md:top-8 md:left-9 flex items-center gap-2.5">
-          <span className="text-[10px] md:text-[11px] font-semibold tracking-[0.28em] text-white/90 uppercase">
+        {/* Wordmark, top-left on the photo */}
+        <div className="absolute top-5 left-5 md:top-8 md:left-9">
+          <span className="text-[10px] md:text-[11px] font-semibold tracking-[0.28em] text-white uppercase drop-shadow-[0_1px_4px_rgba(0,0,0,0.35)]">
             Dock &amp; Bay
           </span>
         </div>
-
-        {/* Editorial tagline, bottom-left (desktop) */}
-        <div className="hidden md:block absolute bottom-10 left-9 right-9">
-          <div className="db-stripe h-1 w-14 rounded-full mb-5" />
-          <h2 className="font-serif text-white text-[2.6rem] leading-[1.05] font-medium tracking-tight max-w-[15ch]">
-            Your seat<br />by the sea.
-          </h2>
-          <p className="text-white/75 text-sm mt-4 max-w-[34ch] leading-relaxed">
-            Book your desk, claim the sofa, or bring the pup along — the whole
-            week, one tap.
-          </p>
-        </div>
+        {/* Hairline seam + faint depth at the edge meeting the panel */}
+        <div className="hidden md:block absolute inset-y-0 right-0 w-24 bg-gradient-to-r from-transparent to-black/5" />
       </div>
 
-      {/* ── Sign-in panel ──────────────────────────────────────── */}
-      <div className="flex-1 flex items-center justify-center px-6 py-10 md:py-0">
-        <div className="w-full max-w-sm flex flex-col">
-          {/* Logo + eyebrow */}
-          <div className="flex items-center gap-3 mb-8">
-            <img
-              src={logoUrl}
-              alt="Dock & Bay"
-              className="w-12 h-12 object-contain rounded-xl shadow-sm ring-1 ring-black/5"
-            />
-            <div className="leading-tight">
-              <span className="block text-[10px] font-semibold tracking-[0.22em] text-slate-400 uppercase">
-                Dock &amp; Bay
-              </span>
-              <span className="block text-sm font-semibold text-dock-navy">HQ Desk Rota</span>
-            </div>
-          </div>
+      {/* ── Sign-in panel ── */}
+      <div className="flex-1 flex items-center justify-center px-6 sm:px-10 py-12 md:py-0">
+        <div className="w-full max-w-[360px] flex flex-col items-center text-center">
+          {/* Brand lockup — centred */}
+          <img
+            src={logoUrl}
+            alt="Dock & Bay"
+            className="w-16 h-16 object-contain rounded-2xl ring-1 ring-black/5 shadow-sm"
+          />
+          <span className="mt-4 text-[10px] font-semibold tracking-[0.24em] text-slate-400 uppercase">
+            Dock &amp; Bay · HQ Desk Rota
+          </span>
 
-          <h1 className="font-serif text-[2.4rem] leading-[1.05] font-semibold text-dock-navy tracking-tight">
+          {/* Heading block */}
+          <h1 className="mt-6 font-serif text-[2.5rem] leading-[1.04] font-semibold text-dock-navy tracking-tight">
             Welcome back
           </h1>
-          <p className="text-[15px] text-slate-500 mt-3 leading-relaxed">
-            Sign in with your Dock &amp; Bay account to pick your spot for the week.
+          <p className="text-[15px] text-slate-500 mt-3 leading-relaxed max-w-[300px]">
+            Sign in with your Dock &amp; Bay account to book your spot for the week.
           </p>
 
+          {/* Notices */}
           {domainError && (
-            <div className="mt-6 w-full bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 text-[13px] text-amber-800 leading-relaxed">
+            <div className="mt-6 w-full bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 text-[13px] text-amber-800 leading-relaxed text-left">
               That account isn&rsquo;t a <strong>@dockandbay.com</strong> address. Please sign in
               with your Dock &amp; Bay work account.
             </div>
           )}
-
           {error && (
-            <div className="mt-6 w-full bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-[13px] text-red-700 leading-relaxed">
+            <div className="mt-6 w-full bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-[13px] text-red-700 leading-relaxed text-left">
               {error}
             </div>
           )}
 
-          {/* Google button — premium navy, white Google chip */}
+          {/* Google button */}
           <button
             onClick={handleGoogleSignIn}
             disabled={loading}
-            className="group mt-8 w-full flex items-center justify-center gap-3 bg-dock-navy hover:bg-[#0f1722] text-white rounded-2xl px-5 py-4 text-[15px] font-semibold transition-all cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed shadow-[0_8px_24px_-8px_rgba(25,36,52,0.5)] hover:shadow-[0_12px_32px_-8px_rgba(25,36,52,0.6)] active:scale-[0.99]"
+            className="group mt-9 w-full flex items-center justify-center gap-3 bg-dock-navy hover:bg-[#0f1722] text-white rounded-2xl px-5 h-14 text-[15px] font-semibold transition-all cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed shadow-[0_10px_30px_-10px_rgba(25,36,52,0.55)] hover:shadow-[0_14px_36px_-10px_rgba(25,36,52,0.65)] active:scale-[0.99]"
           >
             <span className="flex items-center justify-center w-6 h-6 bg-white rounded-full shrink-0 transition-transform group-hover:scale-105">
               <svg className="w-3.5 h-3.5" viewBox="0 0 48 48" aria-hidden="true">
@@ -124,13 +106,10 @@ export const SignIn: React.FC<{ domainError?: boolean; onDismissDomainError?: ()
             <span>{loading ? 'Redirecting…' : 'Continue with Google'}</span>
           </button>
 
-          {/* Footer: stripe + microcopy */}
-          <div className="mt-8 flex items-center gap-3">
-            <div className="db-stripe h-1 w-8 rounded-full opacity-80" />
-            <p className="text-[12px] text-slate-400 leading-relaxed">
-              Access is limited to Dock &amp; Bay team members.
-            </p>
-          </div>
+          {/* Footer microcopy */}
+          <p className="mt-8 text-[12px] text-slate-400 leading-relaxed">
+            Access is limited to Dock &amp; Bay team members.
+          </p>
         </div>
       </div>
     </div>

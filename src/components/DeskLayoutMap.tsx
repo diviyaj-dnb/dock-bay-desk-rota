@@ -29,85 +29,86 @@ interface DeskLayoutMapProps {
 // Both are calibrated visually with the in-app Hot/drag/resize tool when Hot is on.
 const LANDSCAPE_HOTSPOTS: Record<number, HotspotPos> = {
   // TABLE A (left, 10 desks, 5 rows × 2 cols)
-  5:  { x: 17.89, y: 23.68, w: 5.41, h: 11.08 }, // no-screen top
+  5:  { x: 17.89, y: 23.87, w: 5.34, h: 10.84 }, // no-screen top
   6:  { x: 25.50, y: 23.73, w: 5.32, h: 11.10 }, // no-screen top
-  4:  { x: 17.81, y: 35.90, w: 5.42, h: 10.86 },
+  4:  { x: 17.84, y: 36.04, w: 5.34, h: 10.69 },
   7:  { x: 25.47, y: 36.04, w: 5.37, h: 10.79 },
-  3:  { x: 17.74, y: 47.94, w: 5.47, h: 10.61 },
+  3:  { x: 17.79, y: 47.92, w: 5.32, h: 10.52 },
   8:  { x: 25.47, y: 47.97, w: 5.38, h: 10.52 }, // design
-  2:  { x: 17.67, y: 59.73, w: 5.42, h: 10.42 },
-  9:  { x: 25.33, y: 59.83, w: 5.49, h: 10.46 },
-  1:  { x: 17.66, y: 71.74, w: 5.39, h: 11.09 },
-  10: { x: 25.39, y: 71.77, w: 5.43, h: 11.07 },
+  2:  { x: 17.71, y: 59.74, w: 5.30, h: 10.27 },
+  9:  { x: 25.39, y: 59.83, w: 5.31, h: 10.61 },
+  1:  { x: 17.66, y: 71.48, w: 5.27, h: 10.76 },
+  10: { x: 25.37, y: 71.59, w: 5.39, h: 10.71 },
 
   // TABLE B (middle, 8 desks, 4 rows × 2 cols)
   14: { x: 46.80, y: 27.36, w: 5.38, h: 11.27 }, // no-screen top
   15: { x: 54.43, y: 27.23, w: 5.49, h: 11.41 }, // no-screen top
   13: { x: 46.76, y: 39.76, w: 5.38, h: 10.89 },
-  16: { x: 54.47, y: 39.79, w: 5.51, h: 10.99 }, // design
-  12: { x: 46.74, y: 52.08, w: 5.43, h: 11.49 }, // design
-  17: { x: 54.48, y: 52.10, w: 5.65, h: 11.32 },
-  11: { x: 46.80, y: 64.75, w: 5.45, h: 11.93 },
-  18: { x: 54.57, y: 64.94, w: 5.63, h: 11.40 }, // design
+  16: { x: 54.46, y: 39.69, w: 5.35, h: 10.79 }, // design
+  12: { x: 46.77, y: 52.14, w: 5.16, h: 11.34 }, // design
+  17: { x: 54.46, y: 52.06, w: 5.43, h: 11.13 },
+  11: { x: 46.75, y: 64.72, w: 5.35, h: 11.28 },
+  18: { x: 54.49, y: 64.76, w: 5.47, h: 11.23 }, // design
 
   // TABLE C (right, 12 desks, 6 rows × 2 cols)
-  24: { x: 76.92, y: 19.11, w: 5.44, h: 10.94 }, // no-screen top
-  25: { x: 84.51, y: 19.25, w: 5.53, h: 11.09 }, // no-screen top
-  23: { x: 76.94, y: 31.12, w: 5.43, h: 10.69 }, // no-screen
-  26: { x: 84.63, y: 31.27, w: 5.58, h: 10.75 },
-  22: { x: 77.08, y: 43.03, w: 5.53, h: 11.07 },
-  27: { x: 84.79, y: 43.16, w: 5.52, h: 10.96 },
+  24: { x: 76.84, y: 19.14, w: 5.27, h: 10.99 }, // no-screen top
+  25: { x: 84.59, y: 19.28, w: 5.28, h: 11.09 }, // no-screen top
+  23: { x: 76.96, y: 31.24, w: 5.14, h: 10.46 }, // no-screen
+  26: { x: 84.72, y: 31.47, w: 5.58, h: 10.75 },
+  22: { x: 77.03, y: 43.06, w: 5.17, h: 10.81 },
+  27: { x: 84.73, y: 43.25, w: 5.63, h: 10.90 },
   21: { x: 77.09, y: 55.25, w: 5.51, h: 10.72 }, // design
-  28: { x: 84.89, y: 55.42, w: 5.38, h: 11.01 },
+  28: { x: 84.84, y: 55.24, w: 5.38, h: 10.87 },
   20: { x: 77.16, y: 67.18, w: 5.51, h: 11.00 },
   29: { x: 84.97, y: 67.30, w: 5.59, h: 10.86 },
-  19: { x: 77.20, y: 79.86, w: 5.50, h: 11.68 },
-  30: { x: 85.07, y: 80.00, w: 5.57, h: 11.39 },
+  19: { x: 77.21, y: 79.54, w: 5.51, h: 11.65 },
+  30: { x: 85.05, y: 79.71, w: 5.55, h: 11.80 },
 };
 
 // Pup-bed clickable hotspot — same HotspotPos shape as desks so it can be
 // calibrated with the in-app Hot tool (sentinel id 0 in livePositions below).
 // Click opens the booking modal in "pup-booking" mode (dogs only, no desk).
-const PUP_BED_LANDSCAPE: HotspotPos = { x: 47.82, y: 85.96, w: 2.49, h: 7.36 };
-const PUP_BED_PORTRAIT: HotspotPos = { x: 82.0, y: 49.0, w: 14.0, h: 10.0 };
+const PUP_BED_LANDSCAPE: HotspotPos = { x: 47.70, y: 84.86, w: 2.73, h: 7.38 };
+const PUP_BED_PORTRAIT: HotspotPos = { x: 5.81, y: 72.78, w: 8.89, h: 4.98 };
 
-// Portrait hotspots — calibrated visually with the in-app Hot tool against floor-plan-mobile.png.
+// Portrait hotspots — calibrated visually with the in-app Hot tool against the
+// new green-mat mobile floor plan (897×1754).
 const PORTRAIT_HOTSPOTS: Record<number, HotspotPos> = {
   // TABLE A (top, 10 desks, 5 rows × 2 cols)
-  1:  { x: 43.01, y: 29.18, w: 9.63,  h: 4.60 },
-  2:  { x: 43.24, y: 23.70, w: 10.52, h: 4.72 },
-  3:  { x: 43.11, y: 18.48, w: 10.27, h: 4.80 },
-  4:  { x: 43.31, y: 13.11, w: 10.64, h: 4.66 },
-  5:  { x: 43.47, y: 7.61,  w: 9.78,  h: 4.80 },
-  6:  { x: 57.47, y: 7.55,  w: 10.44, h: 5.16 },
-  7:  { x: 57.63, y: 13.20, w: 9.60,  h: 4.73 },
-  8:  { x: 57.38, y: 18.47, w: 9.63,  h: 4.86 },
-  9:  { x: 57.53, y: 23.87, w: 9.38,  h: 4.43 },
-  10: { x: 57.70, y: 29.30, w: 9.98,  h: 4.78 },
+  5:  { x: 38.69, y: 9.44,  w: 12.80, h: 4.68 },
+  6:  { x: 56.39, y: 9.46,  w: 12.06, h: 4.56 },
+  4:  { x: 38.70, y: 14.62, w: 12.78, h: 4.40 },
+  8:  { x: 56.36, y: 14.66, w: 12.19, h: 4.42 },
+  3:  { x: 38.77, y: 19.63, w: 12.53, h: 4.38 },
+  7:  { x: 56.33, y: 19.63, w: 11.91, h: 4.36 },
+  2:  { x: 38.81, y: 24.64, w: 12.47, h: 4.43 },
+  9:  { x: 56.34, y: 24.56, w: 12.24, h: 4.32 },
+  1:  { x: 38.81, y: 29.64, w: 12.64, h: 4.37 },
+  10: { x: 56.45, y: 29.76, w: 12.16, h: 4.36 },
 
   // TABLE B (middle, 8 desks, 4 rows × 2 cols)
-  11: { x: 44.44, y: 54.80, w: 8.96,  h: 3.94 },
-  12: { x: 44.07, y: 49.88, w: 8.97,  h: 4.12 },
-  13: { x: 43.83, y: 44.91, w: 8.28,  h: 3.99 },
-  14: { x: 43.67, y: 39.77, w: 8.83,  h: 3.93 },
-  15: { x: 56.41, y: 39.85, w: 8.45,  h: 4.33 },
-  16: { x: 56.41, y: 44.88, w: 8.18,  h: 3.93 },
-  17: { x: 56.85, y: 49.80, w: 8.18,  h: 4.09 },
-  18: { x: 56.75, y: 54.86, w: 7.98,  h: 4.16 },
+  14: { x: 38.67, y: 40.76, w: 12.59, h: 4.90 },
+  15: { x: 56.38, y: 40.66, w: 12.18, h: 4.82 },
+  13: { x: 38.76, y: 46.09, w: 12.51, h: 4.70 },
+  16: { x: 56.39, y: 46.13, w: 12.19, h: 4.55 },
+  12: { x: 38.79, y: 51.49, w: 12.37, h: 4.55 },
+  17: { x: 56.30, y: 51.51, w: 12.31, h: 4.90 },
+  11: { x: 38.75, y: 56.90, w: 12.73, h: 4.76 },
+  18: { x: 56.36, y: 56.90, w: 12.08, h: 4.91 },
 
   // TABLE C (bottom, 12 desks, 6 rows × 2 cols)
-  19: { x: 43.84, y: 91.59, w: 8.77,  h: 5.23 },
-  20: { x: 44.03, y: 85.79, w: 9.19,  h: 4.22 },
-  21: { x: 44.35, y: 80.66, w: 8.99,  h: 4.10 },
-  22: { x: 43.73, y: 75.39, w: 8.17,  h: 4.22 },
-  23: { x: 43.83, y: 70.35, w: 8.62,  h: 4.27 },
-  24: { x: 43.89, y: 65.25, w: 9.28,  h: 3.72 },
-  25: { x: 56.65, y: 65.34, w: 8.28,  h: 3.85 },
-  26: { x: 56.82, y: 70.49, w: 8.86,  h: 4.08 },
-  27: { x: 56.66, y: 75.53, w: 8.58,  h: 4.38 },
-  28: { x: 56.76, y: 80.68, w: 8.61,  h: 4.28 },
-  29: { x: 56.71, y: 85.81, w: 8.38,  h: 4.00 },
-  30: { x: 56.53, y: 90.99, w: 8.28,  h: 4.36 },
+  24: { x: 38.64, y: 67.60, w: 12.60, h: 4.55 },
+  25: { x: 56.30, y: 67.63, w: 12.27, h: 4.65 },
+  23: { x: 38.63, y: 72.74, w: 12.37, h: 4.60 },
+  26: { x: 56.27, y: 72.77, w: 12.37, h: 4.50 },
+  22: { x: 38.67, y: 77.72, w: 12.70, h: 4.44 },
+  27: { x: 56.45, y: 77.73, w: 12.40, h: 4.40 },
+  21: { x: 38.83, y: 82.49, w: 12.66, h: 4.09 },
+  28: { x: 56.37, y: 82.52, w: 12.54, h: 4.12 },
+  20: { x: 38.74, y: 87.30, w: 12.80, h: 4.31 },
+  29: { x: 56.30, y: 87.30, w: 12.53, h: 4.47 },
+  19: { x: 38.64, y: 92.56, w: 12.89, h: 4.82 },
+  30: { x: 56.39, y: 92.46, w: 12.22, h: 4.82 },
 };
 
 export const DeskLayoutMap: React.FC<DeskLayoutMapProps> = ({
@@ -130,8 +131,8 @@ export const DeskLayoutMap: React.FC<DeskLayoutMapProps> = ({
   const isMobile = useIsMobile();
   const orientation: 'portrait' | 'landscape' = isMobile ? 'portrait' : 'landscape';
   const imgSrc = isMobile ? floorPlanPortrait : floorPlanLandscape;
-  const imgWidth = isMobile ? 941 : 1916;
-  const imgHeight = isMobile ? 1672 : 821;
+  const imgWidth = isMobile ? 897 : 1916;
+  const imgHeight = isMobile ? 1754 : 821;
   // Pup-bed hotspot lives in livePositions under sentinel id 0 so it participates
   // in the same drag/resize/persist/export pipeline as the desks.
   const defaultPupBed = isMobile ? PUP_BED_PORTRAIT : PUP_BED_LANDSCAPE;
@@ -344,19 +345,21 @@ export const DeskLayoutMap: React.FC<DeskLayoutMapProps> = ({
           touchAction: isEditing ? 'none' : 'auto',
         }}
       >
-        {/* Hotspot ring (visible on hover, search, active user, or calibration mode) */}
+        {/* Hotspot ring + fill. Traffic-light model: vacant desks show the
+            green mat through (no fill), booked desks get a red overlay —
+            green = go, red = taken. */}
         <div
           className={`absolute inset-0 rounded-md transition-all duration-200 ease-out ${
             isSearched
               ? 'ring-2 ring-[#f3705a] ring-offset-1 ring-offset-transparent shadow-[0_0_0_4px_rgba(243,112,90,0.25)] scale-105'
               : isActiveUserHere
-                ? 'ring-2 ring-slate-900 scale-[1.03]'
+                ? 'ring-2 ring-slate-900 scale-[1.03] bg-red-600/45'
                 : isHovered
                   ? 'ring-2 ring-slate-900/70 bg-white/15 scale-[1.04] shadow-md'
                   : isEditing
                     ? 'ring-1 ring-dashed ring-red-500/70 bg-red-500/10'
                     : isBooked
-                      ? 'bg-slate-900/45 ring-1 ring-slate-900/20'
+                      ? 'bg-red-600/50 ring-1 ring-red-800/30'
                       : ''
           }`}
           style={{ transformOrigin: 'center' }}
@@ -430,17 +433,16 @@ export const DeskLayoutMap: React.FC<DeskLayoutMapProps> = ({
 
   return (
     <div className="bg-transparent md:bg-white md:rounded-2xl md:border md:border-slate-200 md:shadow-sm p-0 md:p-5 h-full flex flex-col overflow-hidden">
-      {/* Header strip with title + legend — desktop only (mobile maximises vertical space) */}
+      {/* Header strip with title — desktop only (mobile maximises vertical space) */}
       <div className="hidden md:flex flex-col lg:flex-row lg:items-center justify-between gap-3 mb-4 shrink-0">
         <div>
           <h2 className="text-sm font-semibold text-slate-900 tracking-tight">
             Office floor plan
           </h2>
           <p className="text-xs text-slate-500 mt-0.5">
-            Click any desk to manage the booking, or select a teammate to quick-book.
+            Click any desk to manage the booking.
           </p>
         </div>
-
       </div>
 
       {/* Floor plan image with hotspot overlays */}
@@ -449,15 +451,16 @@ export const DeskLayoutMap: React.FC<DeskLayoutMapProps> = ({
         className="relative flex-1 min-h-0 w-full overflow-hidden bg-transparent md:bg-slate-50 md:border md:border-slate-200 md:rounded-xl flex items-center justify-center"
       >
         {/* Scrollable image wrapper */}
-        <div className="w-full h-full overflow-auto flex items-center justify-center">
+        <div className="w-full h-full overflow-auto flex items-start md:items-center justify-center">
           <div
             ref={imageWrapperRef}
-            className="relative shrink-0 max-w-full max-h-full"
+            className={`relative shrink-0 max-w-full ${isMobile ? '' : 'max-h-full'}`}
             style={{
-              // On mobile (portrait image), height-anchor so the floor plan fills vertical space.
-              // On desktop (landscape image), width-anchor — preserves the existing desktop behaviour.
+              // On mobile (portrait image), width-anchor so the floor plan fills
+              // the full screen width (crops the decorative top/bottom margin a
+              // touch). On desktop (landscape), width-anchor as before.
               ...(isMobile
-                ? { height: `${zoom * 100}%`, width: 'auto' }
+                ? { width: `${zoom * 100}%` }
                 : { width: `${zoom * 100}%`, maxWidth: `${zoom * 100}%` }),
               aspectRatio: `${imgWidth} / ${imgHeight}`,
               transition: 'width 0.15s ease-out, height 0.15s ease-out',

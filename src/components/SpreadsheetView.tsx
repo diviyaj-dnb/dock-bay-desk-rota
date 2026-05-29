@@ -256,7 +256,7 @@ export const SpreadsheetView: React.FC<SpreadsheetViewProps> = ({
           type="button"
           onClick={() => isNextWeekUnlocked && onWeekChange(nextMondayDateStr)}
           disabled={!isNextWeekUnlocked}
-          title={isNextWeekUnlocked ? 'Switch to next week' : 'Next week unlocks Thursday'}
+          title={isNextWeekUnlocked ? 'Switch to next week' : 'Next week unlocks Friday'}
           className={`px-3.5 py-1 font-bold rounded-t-md transition-colors ${
             activeWeek === nextMondayDateStr
               ? 'bg-white border-x border-t border-slate-300 text-[#107c41] shadow-sm border-b-2 border-b-white z-10 -mb-[9px] cursor-default'
