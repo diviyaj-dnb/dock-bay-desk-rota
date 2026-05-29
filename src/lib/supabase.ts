@@ -14,5 +14,11 @@ export const supabase = createClient<Database>(url, anonKey, {
   auth: {
     persistSession: true,
     autoRefreshToken: true,
+    // PKCE is the most reliable OAuth flow for mobile browsers — the redirect
+    // back from Google carries a `?code=` that's exchanged for a session,
+    // rather than a URL hash that mobile Safari can drop.
+    flowType: 'pkce',
+    // Pick up the session from the redirect URL on return from Google.
+    detectSessionInUrl: true,
   },
 });

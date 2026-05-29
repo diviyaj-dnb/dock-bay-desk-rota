@@ -21,7 +21,6 @@ import {
   Map,
   LayoutGrid,
   Monitor,
-  PenTool,
   Sofa,
   PawPrint,
   Loader2,
@@ -86,12 +85,13 @@ export default function App() {
     return getMondayDateString(currentMondayDate);
   }, [currentMondayStr]);
 
-  // Rolling 1-week window — next week only unlocks from Thursday 00:00 onwards
-  // (and on Sat/Sun, since at that point "this week" is functionally already over).
-  // Past weeks are never reachable.
+  // Rolling 1-week window (Sarah's rule): every Friday, booking opens for the
+  // following week — so everyone gets an equal shot at seats each week. Next
+  // week unlocks Friday 00:00 and stays open through the weekend. Past weeks
+  // are never reachable, and you only ever book one week ahead.
   const isNextWeekUnlocked = useMemo(() => {
-    const dow = today.getDay(); // 0=Sun, 1=Mon, ..., 6=Sat
-    return dow >= 4 || dow === 0;
+    const dow = today.getDay(); // 0=Sun, 1=Mon, ..., 5=Fri, 6=Sat
+    return dow === 5 || dow === 6 || dow === 0; // Fri, Sat, Sun
   }, [today]);
 
   // Always default to THIS week — user can click "Next week" if they want to book ahead.
@@ -245,17 +245,6 @@ export default function App() {
     return currentDayBookings.filter((b) => dogIds.includes(b.memberId) && b.status === 'booked').length;
   }, [currentDayBookings, teamMembers]);
 
-  const totalDesignDesks = useMemo(() => {
-    return desks.filter((d) => d.type === 'design').length;
-  }, [desks]);
-
-  const designDesksBooked = useMemo(() => {
-    const designDeskIds = desks.filter((d) => d.type === 'design').map((d) => d.id);
-    return currentDayBookings.filter(
-      (b) => b.status === 'booked' && b.deskId !== null && designDeskIds.includes(b.deskId)
-    ).length;
-  }, [currentDayBookings, desks]);
-
   // Handler for clicking a desk on the visual floor plan map
   const handleDeskClick = (deskId: number) => {
     const existingBooking = currentDayBookings.find((b) => b.deskId === deskId);
@@ -344,8 +333,8 @@ export default function App() {
     >
       {/* Header: desktop only — premium minimal, single hairline border */}
       <header className="hidden md:flex bg-white border-b border-slate-200 px-8 py-4 items-center justify-between shrink-0 relative z-20">
-        {/* Brand */}
-        <div className="flex items-center gap-4 min-w-[280px]">
+        {/* Brand — equal flex with the right controls keeps the centre selector centred */}
+        <div className="flex items-center gap-4 flex-1 min-w-0">
           <img
             src={logoUrl}
             alt="Dock & Bay"
@@ -361,8 +350,9 @@ export default function App() {
           </div>
         </div>
 
-        {/* Centre: day selector */}
-        <div className="flex-1 max-w-md mx-auto px-4 flex justify-center">
+        {/* Centre: day selector — fixed natural width so it never drifts when
+            the side sections change width between weeks */}
+        <div className="shrink-0 px-4 flex justify-center">
           <DaySelector
             activeDay={activeDay}
             onDayChange={setActiveDay}
@@ -385,8 +375,9 @@ export default function App() {
           />
         </div>
 
-        {/* Right: who's-in roster + view toggle + help + account menu */}
-        <div className="flex items-center gap-2 min-w-[360px] justify-end">
+        {/* Right: who's-in roster + view toggle + help + account menu —
+            equal flex with the brand so the centre selector stays put */}
+        <div className="flex items-center gap-2 flex-1 min-w-0 justify-end">
           {/* Who's in today */}
           <WhoIsIn
             teamMembers={teamMembers}
@@ -491,12 +482,6 @@ export default function App() {
             <span className="text-slate-500">desks</span>
           </span>
           <span className="group flex items-center gap-1.5 px-2 py-1 rounded-md transition-colors hover:bg-slate-50">
-            <PenTool className="w-3.5 h-3.5 text-slate-400 group-hover:text-slate-600 transition-colors" />
-            <span className="font-semibold text-slate-900 tabular-nums">{designDesksBooked}</span>
-            <span className="text-slate-400 tabular-nums">/ {totalDesignDesks}</span>
-            <span className="text-slate-500">design</span>
-          </span>
-          <span className="group flex items-center gap-1.5 px-2 py-1 rounded-md transition-colors hover:bg-slate-50">
             <Sofa className="w-3.5 h-3.5 text-slate-400 group-hover:text-slate-600 transition-colors" />
             <span className="font-semibold text-slate-900 tabular-nums">{sofaSurfersCount}</span>
             <span className="text-slate-500">sofa surfing</span>
@@ -526,7 +511,7 @@ export default function App() {
               onClick={handleNextWeek}
               disabled={!canGoNext}
               className="p-1.5 hover:bg-slate-100 rounded-md text-slate-500 hover:text-slate-900 transition-all duration-150 active:scale-90 disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-slate-500 enabled:cursor-pointer"
-              title={canGoNext ? 'Next week' : 'Next week unlocks Thursday'}
+              title={canGoNext ? 'Next week' : 'Next week unlocks Friday'}
               aria-label="Next week"
             >
               <ChevronRight className="w-4 h-4" />
@@ -547,7 +532,7 @@ export default function App() {
             <button
               onClick={handleToNextWeek}
               disabled={!isNextWeekUnlocked}
-              title={isNextWeekUnlocked ? 'Jump to next week' : 'Next week unlocks Thursday'}
+              title={isNextWeekUnlocked ? 'Jump to next week' : 'Next week unlocks Friday'}
               className={`px-2.5 py-1 rounded-md font-medium transition-all duration-150 active:scale-[0.97] disabled:opacity-40 disabled:cursor-not-allowed enabled:cursor-pointer ${
                 activeWeek === nextMondayDateStr
                   ? 'text-white bg-[#f3705a] shadow-sm'
@@ -646,11 +631,6 @@ export default function App() {
             <span className="text-slate-400 tabular-nums">/{desks.length}</span>
           </span>
           <span className="flex items-center gap-1 whitespace-nowrap">
-            <PenTool className="w-3 h-3 text-slate-400" />
-            <span className="font-semibold text-slate-900 tabular-nums">{designDesksBooked}</span>
-            <span className="text-slate-400 tabular-nums">/{totalDesignDesks}</span>
-          </span>
-          <span className="flex items-center gap-1 whitespace-nowrap">
             <Sofa className="w-3 h-3 text-slate-400" />
             <span className="font-semibold text-slate-900 tabular-nums">{sofaSurfersCount}</span>
           </span>
@@ -658,15 +638,18 @@ export default function App() {
             <PawPrint className="w-3 h-3 text-slate-400" />
             <span className="font-semibold text-slate-900 tabular-nums">{dogsInOfficeCount}</span>
           </span>
-          <span className="ml-auto shrink-0">
-            <WhoIsIn
-              teamMembers={teamMembers}
-              bookings={currentWeekBookings}
-              desks={desks}
-              activeDay={activeDay}
-              activeMemberId={activeMemberId}
-            />
-          </span>
+        </div>
+
+        {/* Who's in today — own row (kept out of the overflow-x-auto stats row
+            above, which would clip the dropdown panel) */}
+        <div className="px-4 py-2 border-t border-slate-100 flex justify-end">
+          <WhoIsIn
+            teamMembers={teamMembers}
+            bookings={currentWeekBookings}
+            desks={desks}
+            activeDay={activeDay}
+            activeMemberId={activeMemberId}
+          />
         </div>
 
         {/* Day selector */}
