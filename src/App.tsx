@@ -156,7 +156,7 @@ export default function App() {
   // Supabase-backed data (loads on auth)
   const { members: teamMembers, loading: membersLoading } = useTeamMembers(true);
   const { desks, loading: desksLoading } = useDesks(true);
-  const { bookings: currentWeekBookings, loading: bookingsLoading } = useBookingsForWeek(activeWeek, true);
+  const { bookings: currentWeekBookings, loading: bookingsLoading, reload: reloadBookings } = useBookingsForWeek(activeWeek, true);
 
   const isLoadingData = membersLoading || desksLoading;
 
@@ -167,6 +167,7 @@ export default function App() {
     const prevWeekStr = getMondayDateString(prevMonDate);
     try {
       await copyBookingsBetweenWeeks(prevWeekStr, activeWeek);
+      await reloadBookings();
     } catch (e) {
       alert('Could not copy previous week: ' + (e as Error).message);
     }
@@ -326,6 +327,10 @@ export default function App() {
         status,
         bookedBy: activeMemberId,
       });
+      // Force-refresh the local bookings cache so the user sees their change
+      // immediately, even if the Supabase realtime channel hasn't propagated
+      // yet (or isn't enabled on the bookings table).
+      await reloadBookings();
     } catch (e) {
       alert('Could not save booking: ' + (e as Error).message);
     }
@@ -335,6 +340,7 @@ export default function App() {
   const handleDeleteBooking = async (memberId: string, day: DayOfWeek) => {
     try {
       await deleteBooking(memberId, activeWeek, day);
+      await reloadBookings();
     } catch (e) {
       alert('Could not delete booking: ' + (e as Error).message);
     }

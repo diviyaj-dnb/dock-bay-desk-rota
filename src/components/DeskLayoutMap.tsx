@@ -25,37 +25,37 @@ interface DeskLayoutMapProps {
 // Both are calibrated visually with the in-app Hot/drag/resize tool when Hot is on.
 const LANDSCAPE_HOTSPOTS: Record<number, HotspotPos> = {
   // TABLE A (left, 10 desks, 5 rows × 2 cols)
-  5:  { x: 17.85, y: 23.56, w: 5.33, h: 10.85 }, // no-screen top
-  6:  { x: 25.48, y: 23.69, w: 5.29, h: 11.02 }, // no-screen top
-  4:  { x: 17.80, y: 35.98, w: 5.39, h: 10.13 },
+  5:  { x: 17.89, y: 23.68, w: 5.41, h: 11.08 }, // no-screen top
+  6:  { x: 25.50, y: 23.73, w: 5.32, h: 11.10 }, // no-screen top
+  4:  { x: 17.81, y: 35.90, w: 5.42, h: 10.86 },
   7:  { x: 25.47, y: 36.04, w: 5.37, h: 10.79 },
   3:  { x: 17.74, y: 47.94, w: 5.47, h: 10.61 },
-  8:  { x: 25.40, y: 47.97, w: 5.25, h: 10.52 }, // design
+  8:  { x: 25.47, y: 47.97, w: 5.38, h: 10.52 }, // design
   2:  { x: 17.67, y: 59.73, w: 5.42, h: 10.42 },
-  9:  { x: 25.33, y: 59.78, w: 5.49, h: 10.37 },
-  1:  { x: 17.63, y: 71.71, w: 5.18, h: 10.72 },
-  10: { x: 25.41, y: 71.75, w: 5.27, h: 10.81 },
+  9:  { x: 25.33, y: 59.83, w: 5.49, h: 10.46 },
+  1:  { x: 17.66, y: 71.74, w: 5.39, h: 11.09 },
+  10: { x: 25.39, y: 71.77, w: 5.43, h: 11.07 },
 
   // TABLE B (middle, 8 desks, 4 rows × 2 cols)
-  14: { x: 46.72, y: 27.25, w: 5.23, h: 11.64 }, // no-screen top
+  14: { x: 46.80, y: 27.36, w: 5.38, h: 11.27 }, // no-screen top
   15: { x: 54.43, y: 27.23, w: 5.49, h: 11.41 }, // no-screen top
-  13: { x: 46.73, y: 39.69, w: 5.32, h: 10.76 },
-  16: { x: 54.47, y: 39.69, w: 5.51, h: 10.78 }, // design
-  12: { x: 46.81, y: 51.88, w: 5.31, h: 11.33 }, // design
-  17: { x: 54.43, y: 52.07, w: 5.55, h: 11.27 },
-  11: { x: 46.73, y: 64.86, w: 5.32, h: 11.28 },
-  18: { x: 54.50, y: 64.88, w: 5.50, h: 11.29 }, // design
+  13: { x: 46.76, y: 39.76, w: 5.38, h: 10.89 },
+  16: { x: 54.47, y: 39.79, w: 5.51, h: 10.99 }, // design
+  12: { x: 46.74, y: 52.08, w: 5.43, h: 11.49 }, // design
+  17: { x: 54.48, y: 52.10, w: 5.65, h: 11.32 },
+  11: { x: 46.80, y: 64.75, w: 5.45, h: 11.93 },
+  18: { x: 54.57, y: 64.94, w: 5.63, h: 11.40 }, // design
 
   // TABLE C (right, 12 desks, 6 rows × 2 cols)
   24: { x: 76.92, y: 19.11, w: 5.44, h: 10.94 }, // no-screen top
   25: { x: 84.51, y: 19.25, w: 5.53, h: 11.09 }, // no-screen top
   23: { x: 76.94, y: 31.12, w: 5.43, h: 10.69 }, // no-screen
-  26: { x: 84.58, y: 31.19, w: 5.48, h: 10.57 },
-  22: { x: 77.04, y: 42.94, w: 5.46, h: 10.90 },
-  27: { x: 84.71, y: 43.26, w: 5.56, h: 10.71 },
-  21: { x: 77.03, y: 55.15, w: 5.41, h: 10.52 }, // design
-  28: { x: 84.78, y: 55.32, w: 5.56, h: 10.72 },
-  20: { x: 77.12, y: 67.35, w: 5.43, h: 10.57 },
+  26: { x: 84.63, y: 31.27, w: 5.58, h: 10.75 },
+  22: { x: 77.08, y: 43.03, w: 5.53, h: 11.07 },
+  27: { x: 84.79, y: 43.16, w: 5.52, h: 10.96 },
+  21: { x: 77.09, y: 55.25, w: 5.51, h: 10.72 }, // design
+  28: { x: 84.89, y: 55.42, w: 5.38, h: 11.01 },
+  20: { x: 77.16, y: 67.18, w: 5.51, h: 11.00 },
   29: { x: 84.97, y: 67.30, w: 5.59, h: 10.86 },
   19: { x: 77.20, y: 79.86, w: 5.50, h: 11.68 },
   30: { x: 85.07, y: 80.00, w: 5.57, h: 11.39 },
@@ -64,7 +64,7 @@ const LANDSCAPE_HOTSPOTS: Record<number, HotspotPos> = {
 // Pup-bed clickable hotspot — same HotspotPos shape as desks so it can be
 // calibrated with the in-app Hot tool (sentinel id 0 in livePositions below).
 // Click opens the booking modal in "pup-booking" mode (dogs only, no desk).
-const PUP_BED_LANDSCAPE: HotspotPos = { x: 50.43, y: 88.02, w: 7.81, h: 7.81 };
+const PUP_BED_LANDSCAPE: HotspotPos = { x: 47.82, y: 85.96, w: 2.49, h: 7.36 };
 const PUP_BED_PORTRAIT: HotspotPos = { x: 82.0, y: 49.0, w: 14.0, h: 10.0 };
 
 // Portrait hotspots — calibrated visually with the in-app Hot tool against floor-plan-mobile.png.
