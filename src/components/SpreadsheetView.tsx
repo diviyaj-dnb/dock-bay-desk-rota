@@ -8,9 +8,23 @@ interface SpreadsheetViewProps {
   desks: Desk[];
   onCellClick: (memberId: string, day: DayOfWeek) => void;
   day: DayOfWeek;
+  // Week navigation — drives the bottom sheet tabs. The same rolling 1-week
+  // rules apply: only the current week (and next, from Thursday) are reachable.
+  activeWeek: string;
+  currentMondayStr: string;
+  nextMondayDateStr: string;
+  isNextWeekUnlocked: boolean;
+  onWeekChange: (weekId: string) => void;
 }
 
 const DAYS: DayOfWeek[] = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
+
+// "Jun 1" style short label for the week-tab buttons
+function shortWeekLabel(mondayStr: string): string {
+  const [y, m, d] = mondayStr.split('-').map(Number);
+  const monday = new Date(y, m - 1, d);
+  return monday.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+}
 
 export const SpreadsheetView: React.FC<SpreadsheetViewProps> = ({
   teamMembers,
@@ -18,6 +32,11 @@ export const SpreadsheetView: React.FC<SpreadsheetViewProps> = ({
   desks,
   onCellClick,
   day,
+  activeWeek,
+  currentMondayStr,
+  nextMondayDateStr,
+  isNextWeekUnlocked,
+  onWeekChange,
 }) => {
   const [filterMode, setFilterMode] = React.useState<'all' | 'humans' | 'dogs'>('all');
 
@@ -102,7 +121,7 @@ export const SpreadsheetView: React.FC<SpreadsheetViewProps> = ({
           </div>
           <div>
             <h2 className="text-sm font-bold tracking-tight">HOT DESK PLAN — INTERACTIVE SHEET</h2>
-            <p className="text-[11px] text-emerald-100 font-mono">docs.google.com/spreadsheets/d/dock-and-bay-rota</p>
+            <p className="text-[11px] text-emerald-100 font-mono">Click any cell to book or edit</p>
           </div>
         </div>
 
@@ -219,16 +238,35 @@ export const SpreadsheetView: React.FC<SpreadsheetViewProps> = ({
         </table>
       </div>
 
-      {/* Sheets Tab Bar at Bottom matching layout */}
-      <div className="bg-[#f8f9fa] border-t border-slate-200 px-4 py-2 flex items-center gap-3 text-xs select-none">
-        <span className="text-gray-400 font-mono">+</span>
-        <span className="text-gray-400 font-mono text-[10px]">≡</span>
-        <span className="bg-white border-x border-t border-slate-300 px-3.5 py-1 text-[#107c41] font-bold rounded-t-md shadow-sm border-b-2 border-b-white z-10 -mb-[9px]">
-          18/05 (Current Week)
-        </span>
-        <span className="text-gray-400 font-medium px-2 py-1 cursor-not-allowed">
-          11/05 (Archive)
-        </span>
+      {/* Sheets Tab Bar at Bottom — functional week switcher matching the rolling
+          1-week rule (current week always; next week from Thursday). */}
+      <div className="bg-[#f8f9fa] border-t border-slate-200 px-4 py-2 flex items-center gap-2 text-xs select-none">
+        <button
+          type="button"
+          onClick={() => onWeekChange(currentMondayStr)}
+          className={`px-3.5 py-1 font-bold rounded-t-md transition-colors ${
+            activeWeek === currentMondayStr
+              ? 'bg-white border-x border-t border-slate-300 text-[#107c41] shadow-sm border-b-2 border-b-white z-10 -mb-[9px] cursor-default'
+              : 'text-slate-500 hover:text-slate-900 hover:bg-white/50 cursor-pointer'
+          }`}
+        >
+          {shortWeekLabel(currentMondayStr)} (This week)
+        </button>
+        <button
+          type="button"
+          onClick={() => isNextWeekUnlocked && onWeekChange(nextMondayDateStr)}
+          disabled={!isNextWeekUnlocked}
+          title={isNextWeekUnlocked ? 'Switch to next week' : 'Next week unlocks Thursday'}
+          className={`px-3.5 py-1 font-bold rounded-t-md transition-colors ${
+            activeWeek === nextMondayDateStr
+              ? 'bg-white border-x border-t border-slate-300 text-[#107c41] shadow-sm border-b-2 border-b-white z-10 -mb-[9px] cursor-default'
+              : isNextWeekUnlocked
+                ? 'text-slate-500 hover:text-slate-900 hover:bg-white/50 cursor-pointer'
+                : 'text-gray-400 cursor-not-allowed'
+          }`}
+        >
+          {shortWeekLabel(nextMondayDateStr)} (Next week)
+        </button>
       </div>
     </div>
   );
@@ -245,26 +283,19 @@ export const SpreadsheetView: React.FC<SpreadsheetViewProps> = ({
           {rowNum}
         </td>
 
-        {/* Name cell with designer badge or dog icon */}
+        {/* Name cell with avatar or dog icon */}
         <td className="px-3 font-semibold text-slate-800 h-8">
-          <div className="flex items-center justify-between w-full h-full gap-2">
-            <div className="truncate flex items-center gap-1.5">
-              {member.isDog ? (
-                <span className="text-xs">🐶</span>
-              ) : (
-                <span className="text-[10px] w-4.5 h-4.5 bg-slate-100 border border-slate-300 rounded-full flex items-center justify-center text-slate-500 font-bold font-mono">
-                  {member.name.split(' ').map((n) => n[0]).join('')}
-                </span>
-              )}
-              <span className={member.isDog ? "text-emerald-700 font-bold font-mono text-xs" : ""}>
-                {member.name}
-              </span>
-            </div>
-            {member.isDesigner && (
-              <span className="text-[7px] bg-rose-100 hover:bg-rose-200 text-rose-800 font-extrabold px-1 py-0.5 rounded leading-none border border-rose-300/40 uppercase scale-90">
-                Designer
+          <div className="flex items-center w-full h-full gap-1.5">
+            {member.isDog ? (
+              <span className="text-xs">🐶</span>
+            ) : (
+              <span className="text-[10px] w-4.5 h-4.5 bg-slate-100 border border-slate-300 rounded-full flex items-center justify-center text-slate-500 font-bold font-mono">
+                {member.name.split(' ').map((n) => n[0]).join('')}
               </span>
             )}
+            <span className={`truncate ${member.isDog ? 'text-emerald-700 font-bold font-mono text-xs' : ''}`}>
+              {member.name}
+            </span>
           </div>
         </td>
 

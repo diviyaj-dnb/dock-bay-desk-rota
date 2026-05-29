@@ -1,5 +1,8 @@
 import { supabase } from './supabase';
 import type { Booking, DayOfWeek, Desk, TeamMember } from '../types';
+import type { Database } from './database.types';
+
+type BookingInsert = Database['public']['Tables']['bookings']['Insert'];
 
 type DbTeamMember = {
   id: string;
@@ -100,17 +103,17 @@ export async function saveBooking(args: {
     if (evictErr) throw evictErr;
   }
 
-  const { error } = await supabase.from('bookings').upsert(
-    {
-      member_id: args.memberId,
-      week_id: args.weekId,
-      day: args.day,
-      desk_id: args.deskId,
-      status: args.status,
-      booked_by: args.bookedBy,
-    },
-    { onConflict: 'member_id,week_id,day' },
-  );
+  const payload: BookingInsert = {
+    member_id: args.memberId,
+    week_id: args.weekId,
+    day: args.day,
+    desk_id: args.deskId,
+    status: args.status,
+    booked_by: args.bookedBy,
+  };
+  const { error } = await supabase
+    .from('bookings')
+    .upsert(payload, { onConflict: 'member_id,week_id,day' });
   if (error) throw error;
 }
 
@@ -142,7 +145,7 @@ export async function copyBookingsBetweenWeeks(
     .eq('week_id', targetWeekId);
   if (delErr) throw delErr;
 
-  const rows = source.map((b) => ({
+  const rows: BookingInsert[] = source.map((b) => ({
     member_id: b.memberId,
     week_id: targetWeekId,
     day: b.day,

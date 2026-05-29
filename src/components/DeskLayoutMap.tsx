@@ -16,6 +16,7 @@ interface DeskLayoutMapProps {
   teamMembers: TeamMember[];
   activeMemberId: string | null;
   onDeskClick: (deskId: number) => void;
+  onPupBedClick: () => void;
   searchQuery: string;
 }
 
@@ -24,46 +25,47 @@ interface DeskLayoutMapProps {
 // Both are calibrated visually with the in-app Hot/drag/resize tool when Hot is on.
 const LANDSCAPE_HOTSPOTS: Record<number, HotspotPos> = {
   // TABLE A (left, 10 desks, 5 rows × 2 cols)
-  5:  { x: 17.72, y: 23.81, w: 5.44, h: 10.75 }, // no-screen top
-  6:  { x: 25.31, y: 23.94, w: 5.26, h: 11.02 }, // no-screen top
-  4:  { x: 17.71, y: 35.95, w: 5.25, h: 10.71 },
-  7:  { x: 25.38, y: 35.93, w: 5.42, h: 10.34 },
-  3:  { x: 17.69, y: 47.70, w: 5.39, h: 10.05 },
-  8:  { x: 25.41, y: 47.73, w: 5.48, h: 10.26 }, // design
-  2:  { x: 17.56, y: 59.58, w: 5.20, h: 10.12 },
-  9:  { x: 25.27, y: 59.57, w: 5.37, h: 9.95 },
-  1:  { x: 17.49, y: 71.38, w: 5.44, h: 10.80 },
-  10: { x: 25.29, y: 71.23, w: 5.47, h: 10.77 },
+  5:  { x: 17.85, y: 23.56, w: 5.33, h: 10.85 }, // no-screen top
+  6:  { x: 25.48, y: 23.69, w: 5.29, h: 11.02 }, // no-screen top
+  4:  { x: 17.80, y: 35.98, w: 5.39, h: 10.13 },
+  7:  { x: 25.47, y: 36.04, w: 5.37, h: 10.79 },
+  3:  { x: 17.74, y: 47.94, w: 5.47, h: 10.61 },
+  8:  { x: 25.40, y: 47.97, w: 5.25, h: 10.52 }, // design
+  2:  { x: 17.67, y: 59.73, w: 5.42, h: 10.42 },
+  9:  { x: 25.33, y: 59.78, w: 5.49, h: 10.37 },
+  1:  { x: 17.63, y: 71.71, w: 5.18, h: 10.72 },
+  10: { x: 25.41, y: 71.75, w: 5.27, h: 10.81 },
 
   // TABLE B (middle, 8 desks, 4 rows × 2 cols)
-  14: { x: 46.46, y: 27.51, w: 5.29, h: 11.15 }, // no-screen top
-  15: { x: 54.25, y: 27.57, w: 5.53, h: 11.51 }, // no-screen top
-  13: { x: 46.43, y: 39.90, w: 5.51, h: 10.31 },
-  16: { x: 54.10, y: 40.05, w: 5.41, h: 10.38 }, // design
-  12: { x: 46.41, y: 52.04, w: 5.42, h: 10.67 }, // design
-  17: { x: 54.07, y: 52.03, w: 5.64, h: 11.05 },
-  11: { x: 46.48, y: 64.43, w: 5.27, h: 10.90 },
-  18: { x: 54.14, y: 64.49, w: 5.50, h: 10.88 }, // design
+  14: { x: 46.72, y: 27.25, w: 5.23, h: 11.64 }, // no-screen top
+  15: { x: 54.43, y: 27.23, w: 5.49, h: 11.41 }, // no-screen top
+  13: { x: 46.73, y: 39.69, w: 5.32, h: 10.76 },
+  16: { x: 54.47, y: 39.69, w: 5.51, h: 10.78 }, // design
+  12: { x: 46.81, y: 51.88, w: 5.31, h: 11.33 }, // design
+  17: { x: 54.43, y: 52.07, w: 5.55, h: 11.27 },
+  11: { x: 46.73, y: 64.86, w: 5.32, h: 11.28 },
+  18: { x: 54.50, y: 64.88, w: 5.50, h: 11.29 }, // design
 
   // TABLE C (right, 12 desks, 6 rows × 2 cols)
-  24: { x: 76.52, y: 19.57, w: 5.44, h: 10.71 }, // no-screen top
-  25: { x: 84.16, y: 19.62, w: 5.41, h: 10.47 }, // no-screen top
-  23: { x: 76.48, y: 31.42, w: 5.46, h: 10.01 }, // no-screen
-  26: { x: 84.21, y: 31.58, w: 5.40, h: 10.14 },
-  22: { x: 76.61, y: 43.19, w: 5.39, h: 10.43 },
-  27: { x: 84.32, y: 43.38, w: 5.33, h: 10.37 },
-  21: { x: 76.64, y: 55.00, w: 5.52, h: 10.27 }, // design
-  28: { x: 84.34, y: 55.26, w: 5.45, h: 10.07 },
-  20: { x: 76.74, y: 66.95, w: 5.62, h: 10.55 },
-  29: { x: 84.48, y: 66.95, w: 5.54, h: 10.23 },
-  19: { x: 76.77, y: 79.23, w: 5.42, h: 11.23 },
-  30: { x: 84.62, y: 79.43, w: 5.60, h: 11.05 },
+  24: { x: 76.92, y: 19.11, w: 5.44, h: 10.94 }, // no-screen top
+  25: { x: 84.51, y: 19.25, w: 5.53, h: 11.09 }, // no-screen top
+  23: { x: 76.94, y: 31.12, w: 5.43, h: 10.69 }, // no-screen
+  26: { x: 84.58, y: 31.19, w: 5.48, h: 10.57 },
+  22: { x: 77.04, y: 42.94, w: 5.46, h: 10.90 },
+  27: { x: 84.71, y: 43.26, w: 5.56, h: 10.71 },
+  21: { x: 77.03, y: 55.15, w: 5.41, h: 10.52 }, // design
+  28: { x: 84.78, y: 55.32, w: 5.56, h: 10.72 },
+  20: { x: 77.12, y: 67.35, w: 5.43, h: 10.57 },
+  29: { x: 84.97, y: 67.30, w: 5.59, h: 10.86 },
+  19: { x: 77.20, y: 79.86, w: 5.50, h: 11.68 },
+  30: { x: 85.07, y: 80.00, w: 5.57, h: 11.39 },
 };
 
-// Pup bed position on the landscape image (centre-bottom)
-const PUP_BED_LANDSCAPE = { x: 48.0, y: 92.0 };
-// Pup bed position on the portrait image (right side, between table B and C)
-const PUP_BED_PORTRAIT = { x: 82.0, y: 49.0 };
+// Pup-bed clickable hotspot — same HotspotPos shape as desks so it can be
+// calibrated with the in-app Hot tool (sentinel id 0 in livePositions below).
+// Click opens the booking modal in "pup-booking" mode (dogs only, no desk).
+const PUP_BED_LANDSCAPE: HotspotPos = { x: 50.43, y: 88.02, w: 7.81, h: 7.81 };
+const PUP_BED_PORTRAIT: HotspotPos = { x: 82.0, y: 49.0, w: 14.0, h: 10.0 };
 
 // Portrait hotspots — calibrated visually with the in-app Hot tool against floor-plan-mobile.png.
 const PORTRAIT_HOTSPOTS: Record<number, HotspotPos> = {
@@ -111,6 +113,7 @@ export const DeskLayoutMap: React.FC<DeskLayoutMapProps> = ({
   teamMembers,
   activeMemberId,
   onDeskClick,
+  onPupBedClick,
   searchQuery,
 }) => {
   const [hoveredDesk, setHoveredDesk] = useState<number | null>(null);
@@ -125,8 +128,13 @@ export const DeskLayoutMap: React.FC<DeskLayoutMapProps> = ({
   const imgSrc = isMobile ? floorPlanPortrait : floorPlanLandscape;
   const imgWidth = isMobile ? 941 : 1916;
   const imgHeight = isMobile ? 1672 : 821;
-  const pupBed = isMobile ? PUP_BED_PORTRAIT : PUP_BED_LANDSCAPE;
-  const defaultHotspots = isMobile ? PORTRAIT_HOTSPOTS : LANDSCAPE_HOTSPOTS;
+  // Pup-bed hotspot lives in livePositions under sentinel id 0 so it participates
+  // in the same drag/resize/persist/export pipeline as the desks.
+  const defaultPupBed = isMobile ? PUP_BED_PORTRAIT : PUP_BED_LANDSCAPE;
+  const defaultHotspots = React.useMemo(
+    () => ({ ...(isMobile ? PORTRAIT_HOTSPOTS : LANDSCAPE_HOTSPOTS), 0: defaultPupBed }),
+    [isMobile, defaultPupBed],
+  );
   const storageKey = isMobile ? STORAGE_KEY_PORTRAIT : STORAGE_KEY_LANDSCAPE;
 
   // Calibration mode is gated by `?calibrate=1` in the URL. End users never see it.
@@ -178,7 +186,7 @@ export const DeskLayoutMap: React.FC<DeskLayoutMapProps> = ({
   };
 
   const copyPositions = async () => {
-    const lines = Object.entries(livePositions)
+    const lines = (Object.entries(livePositions) as [string, HotspotPos][])
       .sort((a, b) => Number(a[0]) - Number(b[0]))
       .map(
         ([id, p]) =>
@@ -305,6 +313,9 @@ export const DeskLayoutMap: React.FC<DeskLayoutMapProps> = ({
     const isSearched = doesDeskMatchSearch(desk.id);
     const isActiveUserHere = !!activeMemberId && !!booking && booking.memberId === activeMemberId;
     const isEditing = showHotspots;
+    // Booked-but-not-currently-interactive: render a soft grey overlay so booked
+    // desks visually recede and vacant desks (full-colour desk mat) pop.
+    const isBooked = !!booking;
 
     return (
       <div
@@ -340,7 +351,9 @@ export const DeskLayoutMap: React.FC<DeskLayoutMapProps> = ({
                   ? 'ring-2 ring-slate-900/70 bg-white/15 scale-[1.04] shadow-md'
                   : isEditing
                     ? 'ring-1 ring-dashed ring-red-500/70 bg-red-500/10'
-                    : ''
+                    : isBooked
+                      ? 'bg-slate-900/45 ring-1 ring-slate-900/20'
+                      : ''
           }`}
           style={{ transformOrigin: 'center' }}
         />
@@ -356,56 +369,55 @@ export const DeskLayoutMap: React.FC<DeskLayoutMapProps> = ({
           />
         )}
 
-        {/* Always-visible desk number (top-left corner) */}
-        <div className="absolute top-0.5 left-0.5 pointer-events-none">
-          <span className="inline-flex items-center justify-center text-[9px] font-semibold text-slate-900 bg-white/85 backdrop-blur-sm rounded px-1 py-0.5 leading-none tabular-nums shadow-sm">
-            {desk.number}
-          </span>
-        </div>
-
-        {/* Occupant chip — first name on desktop, 2-letter initials on the tighter mobile desks */}
-        {!isEditing && member && !member.isDog && (
-          <div className="absolute inset-x-1 bottom-1 flex items-end justify-center pointer-events-none">
-            <span className="px-1.5 py-0.5 text-[9px] font-semibold text-slate-900 bg-white/90 rounded backdrop-blur-sm shadow-sm truncate max-w-full leading-tight tabular-nums">
-              {isMobile
-                ? member.name
-                    .split(' ')
-                    .map((p) => p[0])
-                    .join('')
-                    .slice(0, 2)
-                    .toUpperCase()
-                : member.name.split(' ')[0]}
+        {/* Centered slot: avatar when booked, desk number when vacant.
+            Seat-map pattern — each desk is self-describing without floating UI stickers. */}
+        {!isEditing && member && !member.isDog ? (() => {
+          const initials = member.name
+            .split(' ')
+            .map((p) => p[0])
+            .join('')
+            .slice(0, 2)
+            .toUpperCase();
+          return (
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+              <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[8px] font-bold leading-none shadow-md ring-2 ring-white ${
+                isActiveUserHere ? 'bg-[#f3705a] text-white' : 'bg-slate-900 text-white'
+              }`}>
+                {initials}
+              </div>
+            </div>
+          );
+        })() : (
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+            <span className="text-[11px] font-semibold text-white leading-none tabular-nums">
+              {desk.number}
             </span>
           </div>
         )}
 
-        {/* Tooltip on hover (suppressed during calibration) */}
+        {/* Tooltip on hover (suppressed during calibration) — compact 2-line pill */}
         {isHovered && !isEditing && (
-          <div className="absolute left-1/2 -translate-x-1/2 -top-2 -translate-y-full bg-slate-900 text-white text-xs px-3 py-2 rounded-lg shadow-xl z-50 pointer-events-none w-48">
-            <div className="flex items-center justify-between border-b border-slate-700 pb-1.5 mb-1.5">
-              <span className="font-semibold">Desk {desk.number}</span>
-              <span className="text-[9px] text-slate-400 uppercase tracking-wider">
-                {desk.type === 'design' ? 'Design' : desk.type === 'no-screen' ? 'No screen' : 'Regular'}
-              </span>
-            </div>
+          <div className="absolute left-1/2 -translate-x-1/2 -top-2 -translate-y-full bg-slate-900 text-white rounded-lg shadow-xl z-50 pointer-events-none whitespace-nowrap px-2.5 py-1.5">
             {booking ? (
-              <div className="space-y-1">
-                <p className="font-medium text-white text-sm leading-tight">{member?.name}</p>
-                <div className="flex items-center justify-between text-[10px]">
-                  <span className="text-slate-400">Occupied</span>
-                  <span className="text-slate-300">Click to edit</span>
-                </div>
-              </div>
+              <>
+                <p className="text-[11px] font-semibold leading-tight">{member?.name}</p>
+                <p className="text-[9px] text-slate-400 leading-tight mt-0.5">
+                  Desk {desk.number} · click to edit
+                </p>
+              </>
             ) : (
-              <div className="space-y-1">
-                <p className="text-slate-300 text-xs">Vacant</p>
-                <div className="flex items-center justify-between text-[10px]">
-                  <span className="text-emerald-400">Available</span>
-                  <span className="text-slate-300">Click to book</span>
-                </div>
-              </div>
+              <>
+                <p className="text-[11px] font-semibold leading-tight">Desk {desk.number}</p>
+                <p className="text-[9px] text-slate-400 leading-tight mt-0.5">
+                  <span className="text-emerald-400">Vacant</span>
+                  {desk.type !== 'regular' && (
+                    <> · {desk.type === 'design' ? 'Design' : 'No screen'}</>
+                  )}
+                  {' · click to book'}
+                </p>
+              </>
             )}
-            <div className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-3 h-3 bg-slate-900 rotate-45" />
+            <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-2.5 h-2.5 bg-slate-900 rotate-45" />
           </div>
         )}
       </div>
@@ -425,24 +437,6 @@ export const DeskLayoutMap: React.FC<DeskLayoutMapProps> = ({
           </p>
         </div>
 
-        <div className="flex flex-wrap gap-1 text-[11px] font-medium text-slate-600">
-          <div className="flex items-center gap-1.5 px-2 py-1">
-            <div className="w-2 h-2 rounded-sm bg-[#a3dbf5] border border-[#7bbada]" />
-            <span>Regular</span>
-          </div>
-          <div className="flex items-center gap-1.5 px-2 py-1">
-            <div className="w-2 h-2 rounded-sm bg-[#fbb9ad] border border-[#e48f82]" />
-            <span>Design</span>
-          </div>
-          <div className="flex items-center gap-1.5 px-2 py-1">
-            <div className="w-2 h-2 rounded-sm bg-white border border-slate-300" />
-            <span>No screen</span>
-          </div>
-          <div className="flex items-center gap-1.5 px-2 py-1">
-            <div className="w-2 h-2 rounded-sm bg-emerald-100 border border-emerald-400" />
-            <span>Pup</span>
-          </div>
-        </div>
       </div>
 
       {/* Floor plan image with hotspot overlays */}
@@ -450,8 +444,195 @@ export const DeskLayoutMap: React.FC<DeskLayoutMapProps> = ({
         ref={containerRef}
         className="relative flex-1 min-h-0 w-full overflow-hidden bg-transparent md:bg-slate-50 md:border md:border-slate-200 md:rounded-xl flex items-center justify-center"
       >
-        {/* Zoom controls — small + bottom-centred so plants/decorations stay visible */}
-        <div className="absolute bottom-2 left-1/2 -translate-x-1/2 z-30 bg-white/95 backdrop-blur-md border border-slate-200 shadow-sm rounded-md px-0.5 py-0.5 flex items-center gap-0.5">
+        {/* Scrollable image wrapper */}
+        <div className="w-full h-full overflow-auto flex items-center justify-center">
+          <div
+            ref={imageWrapperRef}
+            className="relative shrink-0 max-w-full max-h-full"
+            style={{
+              // On mobile (portrait image), height-anchor so the floor plan fills vertical space.
+              // On desktop (landscape image), width-anchor — preserves the existing desktop behaviour.
+              ...(isMobile
+                ? { height: `${zoom * 100}%`, width: 'auto' }
+                : { width: `${zoom * 100}%`, maxWidth: `${zoom * 100}%` }),
+              aspectRatio: `${imgWidth} / ${imgHeight}`,
+              transition: 'width 0.15s ease-out, height 0.15s ease-out',
+            }}
+          >
+            <img
+              src={imgSrc}
+              alt="Office floor plan"
+              width={imgWidth}
+              height={imgHeight}
+              fetchPriority="high"
+              decoding="async"
+              className="w-full h-full block select-none"
+              draggable={false}
+            />
+
+            {/* Desk hotspots */}
+            {desks.map((desk) => renderDesk(desk))}
+
+            {/* Pup-bed clickable hotspot — sentinel id 0 in livePositions */}
+            {(() => {
+              const pos = livePositions[0];
+              if (!pos) return null;
+              const isEditing = showHotspots;
+              const isHovered = hoveredDesk === 0;
+              return (
+                <div
+                  key="pup-bed"
+                  id="desk-0"
+                  onMouseEnter={() => setHoveredDesk(0)}
+                  onMouseLeave={() => setHoveredDesk(null)}
+                  onPointerDown={(e) => isEditing && startDrag(e, 0, 'move')}
+                  onClick={(e) => {
+                    if (isEditing) {
+                      e.stopPropagation();
+                      return;
+                    }
+                    onPupBedClick();
+                  }}
+                  className={`absolute group ${isEditing ? 'cursor-move' : 'cursor-pointer'}`}
+                  style={{
+                    left: `${pos.x - pos.w / 2}%`,
+                    top: `${pos.y - pos.h / 2}%`,
+                    width: `${pos.w}%`,
+                    height: `${pos.h}%`,
+                    touchAction: isEditing ? 'none' : 'auto',
+                  }}
+                  title="Book the pup bed"
+                  aria-label="Book the pup bed"
+                >
+                  <div
+                    className={`absolute inset-0 rounded-2xl transition-all duration-200 ease-out ${
+                      isHovered && !isEditing
+                        ? 'ring-2 ring-amber-400 bg-amber-200/25 scale-[1.04] shadow-md'
+                        : isEditing
+                          ? 'ring-1 ring-dashed ring-red-500/70 bg-red-500/10'
+                          : ''
+                    }`}
+                  />
+                  {isEditing && (
+                    <div
+                      onPointerDown={(e) => startDrag(e, 0, 'resize')}
+                      onClick={(e) => e.stopPropagation()}
+                      className="absolute -right-1.5 -bottom-1.5 w-3 h-3 bg-red-500 border border-white rounded-sm shadow z-20"
+                      style={{ cursor: 'nwse-resize', touchAction: 'none' }}
+                      title="Drag to resize"
+                    />
+                  )}
+                  <div className="absolute top-0.5 left-0.5 pointer-events-none">
+                    <span className="inline-flex items-center justify-center text-[11px] leading-none bg-white/85 backdrop-blur-sm rounded px-1 py-0.5 shadow-sm">
+                      🐾
+                    </span>
+                  </div>
+                  {isHovered && !isEditing && (
+                    <div className="absolute left-1/2 -translate-x-1/2 -top-2 -translate-y-full bg-slate-900 text-white rounded-lg shadow-xl z-50 pointer-events-none whitespace-nowrap px-2.5 py-1.5">
+                      {bookedDogs.length > 0 ? (
+                        <>
+                          <p className="text-[11px] font-semibold leading-tight">
+                            {bookedDogs.map((d) => d.name).join(', ')}
+                          </p>
+                          <p className="text-[9px] text-slate-400 leading-tight mt-0.5">
+                            Pup bed · click to manage
+                          </p>
+                        </>
+                      ) : (
+                        <>
+                          <p className="text-[11px] font-semibold leading-tight">Pup bed</p>
+                          <p className="text-[9px] text-slate-400 leading-tight mt-0.5">
+                            <span className="text-emerald-400">Vacant</span> · click to book a pup
+                          </p>
+                        </>
+                      )}
+                      <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-2.5 h-2.5 bg-slate-900 rotate-45" />
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
+
+            {/* Export dialog — fallback for when clipboard API isn't available (mobile non-HTTPS) */}
+            {exportText && (
+              <div
+                className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm"
+                onClick={() => setExportText(null)}
+              >
+                <div
+                  className="bg-white rounded-2xl shadow-xl p-4 max-w-lg w-full flex flex-col gap-3"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <div>
+                    <h3 className="text-sm font-semibold text-slate-900">Hotspot positions ({orientation})</h3>
+                    <p className="text-xs text-slate-500 mt-1">
+                      Tap into the box → Select All → Copy. Then paste back into chat.
+                    </p>
+                  </div>
+                  <textarea
+                    readOnly
+                    value={exportText}
+                    onFocus={(e) => e.currentTarget.select()}
+                    className="w-full h-64 p-2 text-[10px] font-mono bg-slate-50 border border-slate-200 rounded resize-none"
+                  />
+                  <div className="flex justify-end gap-2">
+                    <button
+                      onClick={async () => {
+                        try {
+                          await navigator.clipboard.writeText(exportText);
+                          setCopyState('copied');
+                          setTimeout(() => setCopyState('idle'), 1500);
+                        } catch {}
+                      }}
+                      className="px-3 py-1.5 bg-slate-900 text-white text-xs font-medium rounded-lg cursor-pointer"
+                    >
+                      {copyState === 'copied' ? 'Copied!' : 'Copy'}
+                    </button>
+                    <button
+                      onClick={() => setExportText(null)}
+                      className="px-3 py-1.5 bg-slate-100 text-slate-700 text-xs font-medium rounded-lg cursor-pointer"
+                    >
+                      Close
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Pup-bed live indicator — names floating on the bed.
+                Hidden by default (would block the dog photo); appears on hover only.
+                The pup-bed hotspot tooltip also shows the names. */}
+            {bookedDogs.length > 0 && livePositions[0] && hoveredDesk === 0 && (
+              <div
+                className="absolute -translate-x-1/2 -translate-y-1/2 pointer-events-none"
+                style={{ left: `${livePositions[0].x}%`, top: `${livePositions[0].y}%` }}
+              >
+                <div className="flex items-center gap-1 bg-white/95 backdrop-blur-sm px-2 py-1 rounded-full shadow-sm border border-amber-200">
+                  {bookedDogs.map((dog) => {
+                    const isSelected = activeMemberId === dog.id;
+                    return (
+                      <span
+                        key={dog.id}
+                        className={`text-[10px] font-semibold leading-none px-1 ${
+                          isSelected ? 'text-amber-700' : 'text-slate-700'
+                        }`}
+                        title={dog.name}
+                      >
+                        {dog.name}
+                      </span>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Zoom + calibration toolbar — lives in the white-space band below the image,
+          so it never sits on top of the floor plan (and never covers the pup bed). */}
+      <div className="flex justify-center pt-2 pb-1 shrink-0">
+        <div className="bg-white border border-slate-200 shadow-sm rounded-md px-0.5 py-0.5 flex items-center gap-0.5">
           <button
             onClick={() => {
               setAutoFit(false);
@@ -535,108 +716,6 @@ export const DeskLayoutMap: React.FC<DeskLayoutMapProps> = ({
               )}
             </>
           )}
-        </div>
-
-        {/* Scrollable image wrapper */}
-        <div className="w-full h-full overflow-auto flex items-center justify-center">
-          <div
-            ref={imageWrapperRef}
-            className="relative shrink-0 max-w-full max-h-full"
-            style={{
-              // On mobile (portrait image), height-anchor so the floor plan fills vertical space.
-              // On desktop (landscape image), width-anchor — preserves the existing desktop behaviour.
-              ...(isMobile
-                ? { height: `${zoom * 100}%`, width: 'auto' }
-                : { width: `${zoom * 100}%`, maxWidth: `${zoom * 100}%` }),
-              aspectRatio: `${imgWidth} / ${imgHeight}`,
-              transition: 'width 0.15s ease-out, height 0.15s ease-out',
-            }}
-          >
-            <img
-              src={imgSrc}
-              alt="Office floor plan"
-              width={imgWidth}
-              height={imgHeight}
-              fetchPriority="high"
-              decoding="async"
-              className="w-full h-full block select-none"
-              draggable={false}
-            />
-
-            {/* Desk hotspots */}
-            {desks.map((desk) => renderDesk(desk))}
-
-            {/* Export dialog — fallback for when clipboard API isn't available (mobile non-HTTPS) */}
-            {exportText && (
-              <div
-                className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm"
-                onClick={() => setExportText(null)}
-              >
-                <div
-                  className="bg-white rounded-2xl shadow-xl p-4 max-w-lg w-full flex flex-col gap-3"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <div>
-                    <h3 className="text-sm font-semibold text-slate-900">Hotspot positions ({orientation})</h3>
-                    <p className="text-xs text-slate-500 mt-1">
-                      Tap into the box → Select All → Copy. Then paste back into chat.
-                    </p>
-                  </div>
-                  <textarea
-                    readOnly
-                    value={exportText}
-                    onFocus={(e) => e.currentTarget.select()}
-                    className="w-full h-64 p-2 text-[10px] font-mono bg-slate-50 border border-slate-200 rounded resize-none"
-                  />
-                  <div className="flex justify-end gap-2">
-                    <button
-                      onClick={async () => {
-                        try {
-                          await navigator.clipboard.writeText(exportText);
-                          setCopyState('copied');
-                          setTimeout(() => setCopyState('idle'), 1500);
-                        } catch {}
-                      }}
-                      className="px-3 py-1.5 bg-slate-900 text-white text-xs font-medium rounded-lg cursor-pointer"
-                    >
-                      {copyState === 'copied' ? 'Copied!' : 'Copy'}
-                    </button>
-                    <button
-                      onClick={() => setExportText(null)}
-                      className="px-3 py-1.5 bg-slate-100 text-slate-700 text-xs font-medium rounded-lg cursor-pointer"
-                    >
-                      Close
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Pup-bed live indicator — names floating on the bed */}
-            {bookedDogs.length > 0 && (
-              <div
-                className="absolute -translate-x-1/2 -translate-y-1/2 pointer-events-none"
-                style={{ left: `${pupBed.x}%`, top: `${pupBed.y}%` }}
-              >
-                <div className="flex items-center gap-1 bg-white/95 backdrop-blur-sm px-2 py-1 rounded-full shadow-sm border border-amber-200">
-                  {bookedDogs.map((dog) => {
-                    const isSelected = activeMemberId === dog.id;
-                    return (
-                      <span
-                        key={dog.id}
-                        className={`text-[10px] font-semibold leading-none px-1 ${
-                          isSelected ? 'text-amber-700' : 'text-slate-700'
-                        }`}
-                        title={dog.name}
-                      >
-                        {dog.name}
-                      </span>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-          </div>
         </div>
       </div>
     </div>

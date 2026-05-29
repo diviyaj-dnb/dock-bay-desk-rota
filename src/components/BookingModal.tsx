@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { TeamMember, Booking, Desk, DayOfWeek } from '../types';
-import { Sofa, Ban, X, Check, Laptop, Trash, PawPrint, PenTool, MapPin, AlertTriangle, Info } from 'lucide-react';
+import { Sofa, Ban, X, Check, Laptop, Trash, PawPrint, PenTool, MapPin, AlertTriangle, Info, ChevronDown, Home } from 'lucide-react';
 
 interface BookingModalProps {
   isOpen: boolean;
@@ -14,6 +14,10 @@ interface BookingModalProps {
   bookings: Booking[];
   onSave: (memberId: string, day: DayOfWeek, deskId: number | null, status: 'booked' | 'sofa_surf' | 'wfh') => void;
   onDelete: (memberId: string, day: DayOfWeek) => void;
+  // When true, the modal was opened from the pup-bed hotspot — picker is
+  // filtered to dogs only, status buttons + desk grid are hidden, and save
+  // is forced to ('booked', desk_id=null).
+  pupBookingMode?: boolean;
 }
 
 // Compute the actual calendar date for a given (weekId, day) pair and format it
@@ -49,10 +53,21 @@ export const BookingModal: React.FC<BookingModalProps> = ({
   bookings,
   onSave,
   onDelete,
+  pupBookingMode = false,
 }) => {
   const [selectedMemberId, setSelectedMemberId] = useState<string>('');
   const [bookingStatus, setBookingStatus] = useState<'booked' | 'sofa_surf' | 'wfh'>('booked');
   const [selectedDeskId, setSelectedDeskId] = useState<number | null>(null);
+  // Disclosure for the full form. Defaults to false (compact mode) when context
+  // is unambiguous — user clicked a specific desk with a specific member in mind.
+  const isSimpleCase = !!memberId && !!deskId && !pupBookingMode;
+  const [showMoreOptions, setShowMoreOptions] = useState<boolean>(!isSimpleCase);
+
+  // Reset disclosure to the appropriate default each time the modal opens fresh.
+  useEffect(() => {
+    if (isOpen) setShowMoreOptions(!isSimpleCase);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen]);
 
   // Load state when modal opens or selections change
   useEffect(() => {
@@ -144,36 +159,115 @@ export const BookingModal: React.FC<BookingModalProps> = ({
     .slice()
     .sort((a, b) => a.name.localeCompare(b.name));
 
+  // Derived for the compact summary view
+  const memberInitials = useMemo(() => {
+    if (!currentMember) return '?';
+    return currentMember.name
+      .split(' ')
+      .map((p) => p[0])
+      .join('')
+      .slice(0, 2)
+      .toUpperCase();
+  }, [currentMember]);
+  const isExistingBooking = !!(
+    selectedMemberId && bookings.some((b) => b.memberId === selectedMemberId && b.day === day)
+  );
+  const deskTypeLabel = targetDesk?.type === 'design'
+    ? 'Design area'
+    : targetDesk?.type === 'no-screen'
+      ? 'No monitor'
+      : 'Standard desk';
+  const statusLabel = bookingStatus === 'booked'
+    ? (currentMember?.isDog
+        ? 'Pup bed'
+        : selectedDeskId
+          ? `Desk ${selectedDeskId} · ${deskTypeLabel}`
+          : 'No desk picked yet')
+    : bookingStatus === 'sofa_surf'
+      ? 'Sofa surfing'
+      : 'Working from home';
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/65 backdrop-blur-sm animate-fade-in">
-      <div 
+      <div
         id="booking-modal-container"
-        className="bg-white rounded-2xl shadow-2xl border border-slate-100 max-w-lg w-full overflow-hidden flex flex-col max-h-[90vh] animate-scale-up"
+        className="bg-white rounded-2xl shadow-2xl border border-slate-100 max-w-sm w-full overflow-hidden flex flex-col max-h-[90vh] animate-scale-up"
       >
         {/* Header */}
-        <div className="px-6 py-5 border-b border-slate-200 flex items-center justify-between">
-          <div>
-            <h3 className="text-base font-semibold text-slate-900 tracking-tight">Manage booking</h3>
-            <p className="text-xs text-slate-500 mt-0.5 tabular-nums">{dateLabelFor(weekId, day)}</p>
+        <div className="px-5 py-3.5 border-b border-slate-100 flex items-center justify-between">
+          <div className="flex items-center gap-2 min-w-0">
+            {pupBookingMode && <PawPrint className="w-4 h-4 text-amber-600 shrink-0" />}
+            <div className="min-w-0">
+              <h3 className="text-sm font-semibold text-slate-900 tracking-tight truncate">
+                {pupBookingMode
+                  ? 'Book the pup bed'
+                  : isExistingBooking
+                    ? 'Edit booking'
+                    : !showMoreOptions
+                      ? 'Reserve desk'
+                      : 'Manage booking'}
+              </h3>
+              <p className="text-[11px] text-slate-500 mt-0.5 tabular-nums">{dateLabelFor(weekId, day)}</p>
+            </div>
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 hover:bg-slate-100 text-slate-400 hover:text-slate-900 rounded-lg transition-colors cursor-pointer"
+            className="p-1 hover:bg-slate-100 text-slate-400 hover:text-slate-900 rounded-md transition-colors cursor-pointer shrink-0"
             aria-label="Close"
           >
-            <X className="w-4 h-4" />
+            <X className="w-3.5 h-3.5" />
           </button>
         </div>
 
         {/* Content Body */}
-        <div className="p-6 overflow-y-auto space-y-5">
-          {/* Member Picker */}
-          <div>
-            <label className="block text-xs font-mono font-bold uppercase text-slate-500 mb-1.5 flex items-center justify-between">
-              <span>Select Team Member</span>
-              <span className="text-[10px] text-slate-400 capitalize">Who is this booking for?</span>
-            </label>
-            <div className="relative">
+        <div className="p-4 overflow-y-auto space-y-3">
+          {/* Compact summary — always visible. Shows who/what/where at a glance
+              so the 90% case ("I clicked my desk, book me") is a 1-click action. */}
+          <div className={`flex items-center gap-2.5 p-3 rounded-xl border ${
+            pupBookingMode ? 'bg-amber-50 border-amber-200' : 'bg-slate-50 border-slate-200'
+          }`}>
+            <div className={`w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold shrink-0 shadow-sm ${
+              pupBookingMode
+                ? 'bg-amber-500 text-white'
+                : currentMember
+                  ? 'bg-slate-900 text-white'
+                  : 'bg-slate-200 text-slate-400'
+            }`}>
+              {pupBookingMode ? <PawPrint className="w-4 h-4" /> : memberInitials}
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-[13px] font-semibold text-slate-900 truncate leading-tight">
+                {currentMember?.name || (pupBookingMode ? 'Pick a pup below' : 'No-one selected')}
+              </p>
+              <p className="text-[11px] text-slate-500 mt-0.5 truncate">{statusLabel}</p>
+            </div>
+          </div>
+
+          {/* Pup-booking mode: just a dog picker, nothing else */}
+          {pupBookingMode && (
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+                Which pup?
+              </label>
+              <select
+                value={selectedMemberId}
+                onChange={(e) => setSelectedMemberId(e.target.value)}
+                className="w-full bg-white border border-slate-200 text-slate-800 rounded-xl px-3.5 py-3 text-sm outline-none focus:ring-2 focus:ring-amber-400 transition-all cursor-pointer font-medium"
+              >
+                <option value="">-- Choose a pup --</option>
+                {dogsList.map((m) => (
+                  <option key={m.id} value={m.id}>🐶 {m.name}</option>
+                ))}
+              </select>
+            </div>
+          )}
+
+          {/* Member picker — only when "more options" is open AND not pup-booking */}
+          {!pupBookingMode && showMoreOptions && (
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+                Who is this for?
+              </label>
               <select
                 id="select-team-member"
                 value={selectedMemberId}
@@ -201,12 +295,13 @@ export const BookingModal: React.FC<BookingModalProps> = ({
                 </optgroup>
               </select>
             </div>
-          </div>
+          )}
 
-          {/* Rota Action Buttons Selector */}
+          {/* Rota Action Buttons Selector — hidden in compact + pup-booking modes */}
+          {!pupBookingMode && showMoreOptions && (
           <div>
-            <label className="block text-xs font-mono font-bold uppercase text-slate-500 mb-1.5">
-              Attendance Rota Status
+            <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+              Attendance status
             </label>
             <div className="grid grid-cols-3 gap-2">
               <button
@@ -249,9 +344,10 @@ export const BookingModal: React.FC<BookingModalProps> = ({
               </button>
             </div>
           </div>
+          )}
 
-          {/* Desk assignment */}
-          {bookingStatus === 'booked' && (
+          {/* Desk assignment — only when more options is open AND not pup-booking */}
+          {!pupBookingMode && showMoreOptions && bookingStatus === 'booked' && (
             currentMember?.isDog ? (
               <div className="border border-slate-200 rounded-xl p-4 text-xs space-y-2 text-slate-600">
                 <div className="flex items-center gap-2">
@@ -345,17 +441,31 @@ export const BookingModal: React.FC<BookingModalProps> = ({
             )
           )}
 
-          {/* Booking reminder */}
+          {/* Booking reminder — only in full-form mode */}
+          {!pupBookingMode && showMoreOptions && (
           <div className="border border-slate-200 rounded-lg px-3.5 py-3 text-xs leading-relaxed text-slate-600 flex gap-2.5 items-start">
             <Info className="w-3.5 h-3.5 text-slate-400 shrink-0 mt-0.5" />
             <p>
               Book one week ahead. Try a different desk than your usual, and leave the coral-marked desks for the design team.
             </p>
           </div>
+          )}
+
+          {/* "More options" disclosure — hidden in pup-booking mode (no extra options needed) */}
+          {!pupBookingMode && (
+            <button
+              type="button"
+              onClick={() => setShowMoreOptions((v) => !v)}
+              className="w-full flex items-center justify-center gap-1.5 text-xs font-medium text-slate-500 hover:text-slate-900 transition-colors py-1.5 cursor-pointer"
+            >
+              <span>{showMoreOptions ? 'Hide options' : 'More options'}</span>
+              <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${showMoreOptions ? 'rotate-180' : ''}`} />
+            </button>
+          )}
         </div>
 
         {/* Footer actions */}
-        <div className="bg-slate-50 px-6 py-4 border-t border-slate-100 flex flex-col-reverse sm:flex-row justify-between gap-3">
+        <div className="bg-slate-50/70 px-4 py-3 border-t border-slate-100 flex flex-col-reverse sm:flex-row justify-between gap-2">
           {/* Delete Action (only available if we have an active booker) */}
           {selectedMemberId && bookings.some(b => b.memberId === selectedMemberId && b.day === day) ? (
             <button
@@ -389,7 +499,15 @@ export const BookingModal: React.FC<BookingModalProps> = ({
               }`}
             >
               <Check className="w-4 h-4" />
-              <span>Save Schedule</span>
+              <span>
+                {pupBookingMode
+                  ? 'Book pup bed'
+                  : isExistingBooking
+                    ? 'Save changes'
+                    : !showMoreOptions
+                      ? 'Confirm'
+                      : 'Save schedule'}
+              </span>
             </button>
           </div>
         </div>
