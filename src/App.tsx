@@ -2,6 +2,7 @@ import React, { useState, useMemo, useEffect, lazy, Suspense } from 'react';
 import { DayOfWeek } from './types';
 import { DaySelector } from './components/DaySelector';
 import { DeskLayoutMap } from './components/DeskLayoutMap';
+import { WhoIsIn } from './components/WhoIsIn';
 
 const SpreadsheetView = lazy(() =>
   import('./components/SpreadsheetView').then((m) => ({ default: m.SpreadsheetView })),
@@ -13,7 +14,6 @@ const RulesModal = lazy(() =>
   import('./components/RulesModal').then((m) => ({ default: m.RulesModal })),
 );
 import {
-  Search,
   HelpCircle,
   ChevronLeft,
   ChevronRight,
@@ -25,14 +25,12 @@ import {
   Sofa,
   PawPrint,
   Loader2,
-  Users,
-  RotateCcw,
+  LogOut,
 } from 'lucide-react';
 import logoUrl from './assets/dock-and-bay-logo.jpg';
-import { useBookingsForWeek, useDesks, useTeamMembers } from './lib/hooks';
+import { useBookingsForWeek, useDesks, useTeamMembers, useSession } from './lib/hooks';
 import { saveBooking, deleteBooking, copyBookingsBetweenWeeks } from './lib/repository';
-
-const ACTIVE_USER_KEY = 'desk_rota_active_user_v1';
+import { supabase } from './lib/supabase';
 
 // Helper to get YYYY-MM-DD string representing Monday of the week containing a given date
 function getMondayDateString(d: Date): string {
@@ -173,20 +171,16 @@ export default function App() {
     }
   };
 
-  // The "active user" — who you've picked from the Team dropdown.
-  // Persists in localStorage so refreshes / next visits remember you.
-  // Drives both the avatar initials AND the quick-book highlight.
-  const [activeMemberId, setActiveMemberId] = useState<string | null>(() => {
-    if (typeof window === 'undefined') return null;
-    return window.localStorage.getItem(ACTIVE_USER_KEY);
-  });
-  useEffect(() => {
-    if (activeMemberId) {
-      window.localStorage.setItem(ACTIVE_USER_KEY, activeMemberId);
-    } else {
-      window.localStorage.removeItem(ACTIVE_USER_KEY);
-    }
-  }, [activeMemberId]);
+  // Identity now comes from the Google login (AuthGate guarantees a session
+  // here). We match the signed-in email to a team_members row — the
+  // handle_new_user DB trigger ensures every @dockandbay.com login has a row
+  // (linked by name or freshly created), so this resolves once members load.
+  const { session } = useSession();
+  const authedEmail = (session?.user?.email ?? '').toLowerCase();
+  const activeMemberId = useMemo(() => {
+    if (!authedEmail) return null;
+    return teamMembers.find((m) => (m.email ?? '').toLowerCase() === authedEmail)?.id ?? null;
+  }, [teamMembers, authedEmail]);
 
   // Modal Control State
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
@@ -197,40 +191,32 @@ export default function App() {
   // to dogs, desk grid is hidden, save is forced to status='booked' / desk_id=null.
   const [isPupBookingMode, setIsPupBookingMode] = useState<boolean>(false);
 
-  // Header dropdowns
-  const [teamOpen, setTeamOpen] = useState<boolean>(false);
+  // Account menu (the avatar dropdown). The "who's in" roster manages its own.
   const [accountOpen, setAccountOpen] = useState<boolean>(false);
-  const teamDropdownRef = React.useRef<HTMLDivElement>(null);
   const accountDropdownRef = React.useRef<HTMLDivElement>(null);
-  const mobileTeamSheetRef = React.useRef<HTMLDivElement>(null);
   const mobileAccountDropdownRef = React.useRef<HTMLDivElement>(null);
 
-  // Close dropdowns on outside click (checks both desktop and mobile DOM nodes)
+  // Close the account menu on outside click (checks desktop + mobile nodes)
   React.useEffect(() => {
-    if (!teamOpen && !accountOpen) return;
+    if (!accountOpen) return;
     const handler = (e: MouseEvent) => {
       const target = e.target as Node;
-      if (teamOpen) {
-        const inDesktop = teamDropdownRef.current?.contains(target);
-        const inMobile = mobileTeamSheetRef.current?.contains(target);
-        if (!inDesktop && !inMobile) setTeamOpen(false);
-      }
-      if (accountOpen) {
-        const inDesktop = accountDropdownRef.current?.contains(target);
-        const inMobile = mobileAccountDropdownRef.current?.contains(target);
-        if (!inDesktop && !inMobile) setAccountOpen(false);
-      }
+      const inDesktop = accountDropdownRef.current?.contains(target);
+      const inMobile = mobileAccountDropdownRef.current?.contains(target);
+      if (!inDesktop && !inMobile) setAccountOpen(false);
     };
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
-  }, [teamOpen, accountOpen]);
+  }, [accountOpen]);
 
-  // "Me" is whoever is currently selected from the Team dropdown
+  // "Me" is the signed-in team member (matched by login email above).
   const me = useMemo(
     () => teamMembers.find((m) => m.id === activeMemberId) ?? null,
     [teamMembers, activeMemberId],
   );
-  const activeMember = me;
+  // Only Diviyaj, Sarah, and Gabriella (is_admin) can book / edit / remove
+  // bookings for OTHER people. Everyone else is limited to their own.
+  const isCurrentUserAdmin = !!me?.isAdmin;
   const myInitials = useMemo(() => {
     if (!me) return '?';
     return me.name
@@ -240,14 +226,6 @@ export default function App() {
       .slice(0, 2)
       .toUpperCase();
   }, [me]);
-
-  // Sorted team list: humans alphabetically, dogs at the bottom
-  const sortedMembers = useMemo(() => {
-    return [...teamMembers].sort((a, b) => {
-      if (!!a.isDog === !!b.isDog) return a.name.localeCompare(b.name);
-      return a.isDog ? 1 : -1;
-    });
-  }, [teamMembers]);
 
   // Statistics & Calculations for Header and summary cards
   const currentDayBookings = useMemo(() => {
@@ -309,15 +287,19 @@ export default function App() {
     setIsModalOpen(true);
   };
 
-  // Save booking. The active user (selected in the Team dropdown) is recorded
-  // as `bookedBy` for activity tracking — separate from `memberId` who the
-  // booking is for.
+  // Save booking. `bookedBy` records who performed the save (the signed-in
+  // user), separate from `memberId` (who the booking is for).
   const handleSaveBooking = async (
     memberId: string,
     day: DayOfWeek,
     deskId: number | null,
     status: 'booked' | 'sofa_surf' | 'wfh',
   ) => {
+    // Permission guard: only admins may book/edit on behalf of others.
+    if (!isCurrentUserAdmin && memberId !== activeMemberId) {
+      alert('You can only manage your own bookings.');
+      return;
+    }
     try {
       await saveBooking({
         memberId,
@@ -338,6 +320,10 @@ export default function App() {
 
   // Delete booking
   const handleDeleteBooking = async (memberId: string, day: DayOfWeek) => {
+    if (!isCurrentUserAdmin && memberId !== activeMemberId) {
+      alert('You can only manage your own bookings.');
+      return;
+    }
     try {
       await deleteBooking(memberId, activeWeek, day);
       await reloadBookings();
@@ -346,8 +332,9 @@ export default function App() {
     }
   };
 
-  const handleSwitchUser = () => {
-    setActiveMemberId(null);
+  const handleSignOut = async () => {
+    await supabase.auth.signOut();
+    // AuthGate re-renders to the SignIn screen on the auth state change.
   };
 
   return (
@@ -398,106 +385,16 @@ export default function App() {
           />
         </div>
 
-        {/* Right: team dropdown + view toggle + help + account menu */}
+        {/* Right: who's-in roster + view toggle + help + account menu */}
         <div className="flex items-center gap-2 min-w-[360px] justify-end">
-          {/* Team dropdown */}
-          <div className="relative" ref={teamDropdownRef}>
-            <button
-              onClick={() => setTeamOpen((o) => !o)}
-              className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium border transition-all duration-150 cursor-pointer active:scale-[0.98] ${
-                !me
-                  ? 'bg-[#f3705a] text-white border-[#f3705a] hover:bg-[#e05a43] hover:border-[#e05a43] shadow-sm'
-                  : teamOpen
-                    ? 'bg-slate-900 text-white border-slate-900'
-                    : 'bg-white text-slate-700 border-slate-200 hover:border-slate-300 hover:bg-slate-50'
-              }`}
-              title={me ? `Switch user (currently: ${me.name})` : 'Pick yourself from the team'}
-            >
-              <Users className="w-3.5 h-3.5" />
-              <span className="truncate max-w-[120px]">
-                {me ? 'Team' : 'Pick yourself'}
-              </span>
-              <ChevronDown className={`w-3 h-3 transition-transform duration-200 ${teamOpen ? 'rotate-180' : ''}`} />
-            </button>
-
-            {teamOpen && (
-              <div className="absolute right-0 top-full mt-1.5 w-72 bg-white border border-slate-200 rounded-xl shadow-xl z-50 overflow-hidden flex flex-col max-h-[60vh]">
-                <div className="p-2 border-b border-slate-100">
-                  <div className="relative">
-                    <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                    <input
-                      type="text"
-                      placeholder="Search team member"
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      autoFocus
-                      className="w-full bg-slate-50 border border-slate-200 text-slate-900 placeholder:text-slate-400 rounded-md pl-9 pr-3 py-2 text-xs outline-none focus:ring-1 focus:ring-slate-900 focus:bg-white transition-colors"
-                    />
-                  </div>
-                </div>
-
-                <div className="overflow-y-auto flex-1 p-1.5 custom-scrollbar">
-                  {sortedMembers
-                    .filter((m) => m.name.toLowerCase().includes(searchQuery.toLowerCase()))
-                    .map((m) => {
-                      const isSelected = m.id === activeMemberId;
-                      const hasBookingToday = currentDayBookings.find((b) => b.memberId === m.id);
-                      const statusLabel = hasBookingToday
-                        ? hasBookingToday.status === 'booked'
-                          ? m.isDog ? 'Pup bed' : `Desk ${hasBookingToday.deskId}`
-                          : hasBookingToday.status === 'sofa_surf'
-                            ? m.isDog ? 'Pup bed' : 'Sofa'
-                            : 'WFH'
-                        : null;
-                      return (
-                        <button
-                          key={m.id}
-                          onClick={() => {
-                            setActiveMemberId(m.id === activeMemberId ? null : m.id);
-                            setTeamOpen(false);
-                          }}
-                          className={`w-full px-2.5 py-2 rounded-md text-xs flex items-center justify-between transition-colors text-left ${
-                            isSelected
-                              ? 'bg-slate-900 text-white'
-                              : 'hover:bg-slate-50 text-slate-700'
-                          }`}
-                        >
-                          <span className="flex items-center gap-2 truncate">
-                            {m.isDog && <span className="text-sm leading-none">🐶</span>}
-                            <span className="truncate font-medium">{m.name}</span>
-                          </span>
-                          {statusLabel && (
-                            <span
-                              className={`text-[10px] font-medium shrink-0 ml-2 ${
-                                isSelected ? 'text-slate-300' : 'text-slate-400'
-                              }`}
-                            >
-                              {statusLabel}
-                            </span>
-                          )}
-                        </button>
-                      );
-                    })}
-                </div>
-
-                {activeMember && (
-                  <div className="p-2 border-t border-slate-100 bg-slate-50/50">
-                    <button
-                      onClick={() => {
-                        setModalMemberId(activeMemberId);
-                        setModalDeskId(null);
-                        setIsModalOpen(true);
-                        setTeamOpen(false);
-                      }}
-                      className="w-full py-1.5 px-3 bg-[#f3705a] hover:bg-[#e05a43] text-white text-xs font-medium rounded-md transition-colors cursor-pointer"
-                    >
-                      Book for {activeMember.name.split(' ')[0]}
-                    </button>
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
+          {/* Who's in today */}
+          <WhoIsIn
+            teamMembers={teamMembers}
+            bookings={currentWeekBookings}
+            desks={desks}
+            activeDay={activeDay}
+            activeMemberId={activeMemberId}
+          />
 
           {/* View toggle */}
           <div className="flex items-center bg-slate-100 p-0.5 rounded-lg">
@@ -567,13 +464,12 @@ export default function App() {
                 <button
                   onClick={() => {
                     setAccountOpen(false);
-                    handleSwitchUser();
-                    setTeamOpen(true);
+                    handleSignOut();
                   }}
                   className="w-full flex items-center gap-2 px-3 py-2 text-xs text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer"
                 >
-                  <RotateCcw className="w-3.5 h-3.5 text-slate-500" />
-                  <span>Switch user</span>
+                  <LogOut className="w-3.5 h-3.5 text-slate-500" />
+                  <span>Sign out</span>
                 </button>
               </div>
             )}
@@ -718,23 +614,22 @@ export default function App() {
                 <button
                   onClick={() => {
                     setAccountOpen(false);
-                    setActiveMemberId(null);
-                    setTeamOpen(true);
-                  }}
-                  className="w-full flex items-center gap-2 px-3 py-2 text-xs text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer"
-                >
-                  <RotateCcw className="w-3.5 h-3.5 text-slate-500" />
-                  <span>Switch user</span>
-                </button>
-                <button
-                  onClick={() => {
-                    setAccountOpen(false);
                     setIsRulesOpen(true);
                   }}
                   className="w-full flex items-center gap-2 px-3 py-2 text-xs text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer border-t border-slate-100"
                 >
                   <HelpCircle className="w-3.5 h-3.5 text-slate-500" />
                   <span>Booking guidelines</span>
+                </button>
+                <button
+                  onClick={() => {
+                    setAccountOpen(false);
+                    handleSignOut();
+                  }}
+                  className="w-full flex items-center gap-2 px-3 py-2 text-xs text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer border-t border-slate-100"
+                >
+                  <LogOut className="w-3.5 h-3.5 text-slate-500" />
+                  <span>Sign out</span>
                 </button>
               </div>
             )}
@@ -762,6 +657,15 @@ export default function App() {
           <span className="flex items-center gap-1 whitespace-nowrap">
             <PawPrint className="w-3 h-3 text-slate-400" />
             <span className="font-semibold text-slate-900 tabular-nums">{dogsInOfficeCount}</span>
+          </span>
+          <span className="ml-auto shrink-0">
+            <WhoIsIn
+              teamMembers={teamMembers}
+              bookings={currentWeekBookings}
+              desks={desks}
+              activeDay={activeDay}
+              activeMemberId={activeMemberId}
+            />
           </span>
         </div>
 
@@ -812,81 +716,6 @@ export default function App() {
           </button>
         </div>
 
-        {/* Mobile team-picker sheet — full-width overlay when teamOpen */}
-        {teamOpen && (
-          <div className="fixed inset-0 z-50 flex items-end md:hidden" onClick={() => setTeamOpen(false)}>
-            <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" />
-            <div
-              ref={mobileTeamSheetRef}
-              className="relative w-full bg-white rounded-t-2xl shadow-2xl max-h-[80vh] flex flex-col"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="p-3 border-b border-slate-200 flex items-center justify-between">
-                <h3 className="text-sm font-semibold text-slate-900">Pick yourself</h3>
-                <button
-                  onClick={() => setTeamOpen(false)}
-                  className="p-1.5 hover:bg-slate-100 rounded-lg text-slate-500"
-                  aria-label="Close"
-                >
-                  <ChevronDown className="w-4 h-4" />
-                </button>
-              </div>
-              <div className="p-3 border-b border-slate-100">
-                <div className="relative">
-                  <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                  <input
-                    type="text"
-                    placeholder="Search team member"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full bg-slate-50 border border-slate-200 text-slate-900 placeholder:text-slate-400 rounded-lg pl-9 pr-3 py-2.5 text-sm outline-none focus:ring-1 focus:ring-slate-900 focus:bg-white transition-colors"
-                  />
-                </div>
-              </div>
-              <div className="overflow-y-auto flex-1 p-2">
-                {sortedMembers
-                  .filter((m) => m.name.toLowerCase().includes(searchQuery.toLowerCase()))
-                  .map((m) => {
-                    const isSelected = m.id === activeMemberId;
-                    const hasBookingToday = currentDayBookings.find((b) => b.memberId === m.id);
-                    const statusLabel = hasBookingToday
-                      ? hasBookingToday.status === 'booked'
-                        ? m.isDog ? 'Pup bed' : `Desk ${hasBookingToday.deskId}`
-                        : hasBookingToday.status === 'sofa_surf'
-                          ? m.isDog ? 'Pup bed' : 'Sofa'
-                          : 'WFH'
-                      : null;
-                    return (
-                      <button
-                        key={m.id}
-                        onClick={() => {
-                          setActiveMemberId(m.id === activeMemberId ? null : m.id);
-                          setTeamOpen(false);
-                        }}
-                        className={`w-full px-3 py-3 rounded-lg text-sm flex items-center justify-between transition-colors text-left ${
-                          isSelected
-                            ? 'bg-slate-900 text-white'
-                            : 'hover:bg-slate-50 text-slate-700'
-                        }`}
-                      >
-                        <span className="flex items-center gap-2 truncate">
-                          {m.isDog && <span className="leading-none">🐶</span>}
-                          <span className="truncate font-medium">{m.name}</span>
-                        </span>
-                        {statusLabel && (
-                          <span className={`text-[11px] font-medium shrink-0 ml-2 ${
-                            isSelected ? 'text-slate-300' : 'text-slate-400'
-                          }`}>
-                            {statusLabel}
-                          </span>
-                        )}
-                      </button>
-                    );
-                  })}
-              </div>
-            </div>
-          </div>
-        )}
       </div>
 
       {/* Workspace: full-width main viewport (no padding on mobile so floor plan can fill) */}
@@ -953,6 +782,8 @@ export default function App() {
             onSave={handleSaveBooking}
             onDelete={handleDeleteBooking}
             pupBookingMode={isPupBookingMode}
+            isAdmin={isCurrentUserAdmin}
+            currentUserId={activeMemberId}
           />
         </Suspense>
       )}

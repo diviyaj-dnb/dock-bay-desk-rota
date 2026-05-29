@@ -18,6 +18,12 @@ interface BookingModalProps {
   // filtered to dogs only, status buttons + desk grid are hidden, and save
   // is forced to ('booked', desk_id=null).
   pupBookingMode?: boolean;
+  // Admins (Diviyaj, Sarah, Gabriella) may book/edit/remove for anyone.
+  // Non-admins are limited to their own bookings.
+  isAdmin?: boolean;
+  // The signed-in user's team-member id — "own" booking is one where the
+  // booking's member equals this.
+  currentUserId?: string | null;
 }
 
 // Compute the actual calendar date for a given (weekId, day) pair and format it
@@ -54,6 +60,8 @@ export const BookingModal: React.FC<BookingModalProps> = ({
   onSave,
   onDelete,
   pupBookingMode = false,
+  isAdmin = false,
+  currentUserId = null,
 }) => {
   const [selectedMemberId, setSelectedMemberId] = useState<string>('');
   const [bookingStatus, setBookingStatus] = useState<'booked' | 'sofa_surf' | 'wfh'>('booked');
@@ -172,6 +180,11 @@ export const BookingModal: React.FC<BookingModalProps> = ({
   const isExistingBooking = !!(
     selectedMemberId && bookings.some((b) => b.memberId === selectedMemberId && b.day === day)
   );
+  // Permission: admins manage anyone; everyone else only their own row.
+  // For a fresh booking with no member chosen yet, non-admins implicitly book
+  // for themselves, so it's allowed.
+  const targetIsSelfOrEmpty = !selectedMemberId || selectedMemberId === currentUserId;
+  const canManage = isAdmin || targetIsSelfOrEmpty;
   const deskTypeLabel = targetDesk?.type === 'design'
     ? 'Design area'
     : targetDesk?.type === 'no-screen'
@@ -262,8 +275,8 @@ export const BookingModal: React.FC<BookingModalProps> = ({
             </div>
           )}
 
-          {/* Member picker — only when "more options" is open AND not pup-booking */}
-          {!pupBookingMode && showMoreOptions && (
+          {/* Member picker — admins only (non-admins always book themselves). */}
+          {!pupBookingMode && showMoreOptions && isAdmin && (
             <div>
               <label className="block text-xs font-semibold text-slate-700 mb-1.5">
                 Who is this for?
@@ -464,10 +477,20 @@ export const BookingModal: React.FC<BookingModalProps> = ({
           )}
         </div>
 
+        {/* Read-only notice when a non-admin is viewing someone else's booking */}
+        {!canManage && (
+          <div className="px-4 pb-1">
+            <div className="bg-slate-50 border border-slate-200 rounded-lg px-3.5 py-2.5 text-[12px] text-slate-600 leading-relaxed">
+              This is <strong className="text-slate-800">{currentMember?.name}</strong>&rsquo;s
+              booking. You can only manage your own — ask an admin to change someone else&rsquo;s.
+            </div>
+          </div>
+        )}
+
         {/* Footer actions */}
         <div className="bg-slate-50/70 px-4 py-3 border-t border-slate-100 flex flex-col-reverse sm:flex-row justify-between gap-2">
-          {/* Delete Action (only available if we have an active booker) */}
-          {selectedMemberId && bookings.some(b => b.memberId === selectedMemberId && b.day === day) ? (
+          {/* Delete Action — only for managers of an existing booking */}
+          {canManage && selectedMemberId && bookings.some(b => b.memberId === selectedMemberId && b.day === day) ? (
             <button
               type="button"
               onClick={handleDelete}
@@ -486,29 +509,31 @@ export const BookingModal: React.FC<BookingModalProps> = ({
               onClick={onClose}
               className="py-2.5 px-4 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-100 font-bold text-xs transition-all cursor-pointer w-full sm:w-auto flex items-center justify-center"
             >
-              Cancel
+              {canManage ? 'Cancel' : 'Close'}
             </button>
-            <button
-              type="button"
-              disabled={!isFormValid()}
-              onClick={handleSave}
-              className={`py-2.5 px-5 rounded-xl font-bold text-xs transition-all flex items-center justify-center gap-1.5 w-full sm:w-auto ${
-                isFormValid()
-                  ? 'bg-dock-navy text-white hover:bg-slate-800 cursor-pointer shadow-md'
-                  : 'bg-slate-200 text-slate-400 border-slate-200 cursor-not-allowed'
-              }`}
-            >
-              <Check className="w-4 h-4" />
-              <span>
-                {pupBookingMode
-                  ? 'Book pup bed'
-                  : isExistingBooking
-                    ? 'Save changes'
-                    : !showMoreOptions
-                      ? 'Confirm'
-                      : 'Save schedule'}
-              </span>
-            </button>
+            {canManage && (
+              <button
+                type="button"
+                disabled={!isFormValid()}
+                onClick={handleSave}
+                className={`py-2.5 px-5 rounded-xl font-bold text-xs transition-all flex items-center justify-center gap-1.5 w-full sm:w-auto ${
+                  isFormValid()
+                    ? 'bg-dock-navy text-white hover:bg-slate-800 cursor-pointer shadow-md'
+                    : 'bg-slate-200 text-slate-400 border-slate-200 cursor-not-allowed'
+                }`}
+              >
+                <Check className="w-4 h-4" />
+                <span>
+                  {pupBookingMode
+                    ? 'Book pup bed'
+                    : isExistingBooking
+                      ? 'Save changes'
+                      : !showMoreOptions
+                        ? 'Confirm'
+                        : 'Save schedule'}
+                </span>
+              </button>
+            )}
           </div>
         </div>
       </div>
