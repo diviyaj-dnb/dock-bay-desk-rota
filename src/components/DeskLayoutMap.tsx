@@ -6,8 +6,12 @@ import floorPlanPortrait from '../assets/floor-plan-mobile.webp';
 import { useIsMobile } from '../lib/hooks';
 
 type HotspotPos = { x: number; y: number; w: number; h: number };
-const STORAGE_KEY_LANDSCAPE = 'desk_hotspot_positions_landscape_v1';
-const STORAGE_KEY_PORTRAIT = 'desk_hotspot_positions_portrait_v1';
+// v2: bumped after v2.0.1 calibration locked in. Older localStorage entries
+// (from session-time drags that were never pasted back) are now ignored so
+// every browser starts from the committed defaults. Re-calibrators just
+// re-save under v2.
+const STORAGE_KEY_LANDSCAPE = 'desk_hotspot_positions_landscape_v2';
+const STORAGE_KEY_PORTRAIT = 'desk_hotspot_positions_portrait_v2';
 
 interface DeskLayoutMapProps {
   activeDay: DayOfWeek;
