@@ -10,6 +10,7 @@ type DbTeamMember = {
   email: string | null;
   is_designer: boolean;
   is_dog: boolean;
+  is_admin: boolean;
   archived: boolean;
 };
 
@@ -34,8 +35,10 @@ type DbBooking = {
 const toTeamMember = (r: DbTeamMember): TeamMember => ({
   id: r.id,
   name: r.name,
+  email: r.email,
   isDesigner: r.is_designer || undefined,
   isDog: r.is_dog || undefined,
+  isAdmin: r.is_admin || undefined,
 });
 
 const toDesk = (r: DbDesk): Desk => ({

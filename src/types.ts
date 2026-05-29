@@ -14,8 +14,10 @@ export interface Desk {
 export interface TeamMember {
   id: string;
   name: string;
+  email?: string | null;
   isDog?: boolean;
   isDesigner?: boolean;
+  isAdmin?: boolean;
 }
 
 export interface Booking {

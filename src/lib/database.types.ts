@@ -12,6 +12,7 @@ export type Database = {
           email: string | null;
           is_designer: boolean;
           is_dog: boolean;
+          is_admin: boolean;
           archived: boolean;
           created_at: string;
         };
@@ -21,6 +22,7 @@ export type Database = {
           email?: string | null;
           is_designer?: boolean;
           is_dog?: boolean;
+          is_admin?: boolean;
           archived?: boolean;
           created_at?: string;
         };
@@ -30,6 +32,7 @@ export type Database = {
           email?: string | null;
           is_designer?: boolean;
           is_dog?: boolean;
+          is_admin?: boolean;
           archived?: boolean;
           created_at?: string;
         };
