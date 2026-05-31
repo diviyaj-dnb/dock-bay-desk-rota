@@ -621,8 +621,51 @@ export default function App() {
           </div>
         </div>
 
-        {/* Stats + date compact, horizontally scrollable */}
-        <div className="px-4 py-2 flex items-center gap-3 text-[11px] text-slate-600 overflow-x-auto border-t border-slate-100 scrollbar-none">
+        {/* Day selector + week arrows — directly under the brand so the floor
+            plan gets maximum height. Chevrons flank the day pills. */}
+        <div className="flex items-center gap-1 px-2 py-1.5 border-t border-slate-100">
+          <button
+            onClick={handlePrevWeek}
+            disabled={!canGoPrev}
+            className="p-1 rounded-md text-slate-500 active:scale-90 transition-all disabled:opacity-30 disabled:cursor-not-allowed shrink-0"
+            aria-label="Previous week"
+          >
+            <ChevronLeft className="w-4 h-4" />
+          </button>
+          <div className="flex-1 min-w-0 flex justify-center overflow-x-auto scrollbar-none">
+            <DaySelector
+              activeDay={activeDay}
+              onDayChange={setActiveDay}
+              datesByDay={datesByDay}
+              bookingsByDay={useMemo(() => {
+                const counts: Record<DayOfWeek, number> = {
+                  Monday: 0,
+                  Tuesday: 0,
+                  Wednesday: 0,
+                  Thursday: 0,
+                  Friday: 0,
+                };
+                currentWeekBookings.forEach((b) => {
+                  if (b.status === 'booked' && b.deskId !== null) {
+                    counts[b.day]++;
+                  }
+                });
+                return counts;
+              }, [currentWeekBookings])}
+            />
+          </div>
+          <button
+            onClick={handleNextWeek}
+            disabled={!canGoNext}
+            className="p-1 rounded-md text-slate-500 active:scale-90 transition-all disabled:opacity-30 disabled:cursor-not-allowed shrink-0"
+            aria-label="Next week"
+          >
+            <ChevronRight className="w-4 h-4" />
+          </button>
+        </div>
+
+        {/* Stats + who's-in — compact line (week shown by the date here) */}
+        <div className="px-4 py-1.5 flex items-center gap-3 text-[11px] text-slate-600 overflow-x-auto border-t border-slate-100 scrollbar-none">
           <span className="text-slate-700 font-medium whitespace-nowrap tabular-nums">{selectedDateLabel}</span>
           <span className="w-px h-3 bg-slate-200 shrink-0" />
           <span className="flex items-center gap-1 whitespace-nowrap">
@@ -638,65 +681,17 @@ export default function App() {
             <PawPrint className="w-3 h-3 text-slate-400" />
             <span className="font-semibold text-slate-900 tabular-nums">{dogsInOfficeCount}</span>
           </span>
-        </div>
-
-        {/* Who's in today — own row (kept out of the overflow-x-auto stats row
-            above, which would clip the dropdown panel) */}
-        <div className="px-4 py-2 border-t border-slate-100 flex justify-end">
-          <WhoIsIn
-            teamMembers={teamMembers}
-            bookings={currentWeekBookings}
-            desks={desks}
-            activeDay={activeDay}
-            activeMemberId={activeMemberId}
-          />
-        </div>
-
-        {/* Day selector */}
-        <div className="px-3 py-2 border-t border-slate-100 flex justify-center">
-          <DaySelector
-            activeDay={activeDay}
-            onDayChange={setActiveDay}
-            datesByDay={datesByDay}
-            bookingsByDay={useMemo(() => {
-              const counts: Record<DayOfWeek, number> = {
-                Monday: 0,
-                Tuesday: 0,
-                Wednesday: 0,
-                Thursday: 0,
-                Friday: 0,
-              };
-              currentWeekBookings.forEach((b) => {
-                if (b.status === 'booked' && b.deskId !== null) {
-                  counts[b.day]++;
-                }
-              });
-              return counts;
-            }, [currentWeekBookings])}
-          />
-        </div>
-
-        {/* Week navigator — centred date with prev/next on the sides */}
-        <div className="px-3 py-2 border-t border-slate-100 flex items-center justify-between">
-          <button
-            onClick={handlePrevWeek}
-            disabled={!canGoPrev}
-            className="p-1.5 hover:bg-slate-100 rounded-md text-slate-500 active:scale-90 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
-            aria-label="Previous week"
-          >
-            <ChevronLeft className="w-4 h-4" />
-          </button>
-          <span className="text-xs font-medium text-slate-900 tabular-nums text-center">
-            {getWeekRangeLabel(activeWeek)}
+          {/* Who's-in roster — dropdown uses fixed positioning so the
+              overflow-x-auto here can't clip it. */}
+          <span className="ml-auto shrink-0 pl-2">
+            <WhoIsIn
+              teamMembers={teamMembers}
+              bookings={currentWeekBookings}
+              desks={desks}
+              activeDay={activeDay}
+              activeMemberId={activeMemberId}
+            />
           </span>
-          <button
-            onClick={handleNextWeek}
-            disabled={!canGoNext}
-            className="p-1.5 hover:bg-slate-100 rounded-md text-slate-500 active:scale-90 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
-            aria-label="Next week"
-          >
-            <ChevronRight className="w-4 h-4" />
-          </button>
         </div>
 
       </div>

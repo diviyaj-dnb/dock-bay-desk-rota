@@ -30,6 +30,26 @@ export const WhoIsIn: React.FC<WhoIsInProps> = ({
 }) => {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
+  const btnRef = useRef<HTMLButtonElement>(null);
+  // The panel is rendered with position:fixed so it can never be clipped by an
+  // overflow ancestor (e.g. the mobile stats strip). We anchor it to the
+  // trigger's on-screen position when it opens.
+  const [panelStyle, setPanelStyle] = useState<React.CSSProperties>({});
+
+  const toggle = () => {
+    setOpen((o) => {
+      const next = !o;
+      if (next && btnRef.current) {
+        const r = btnRef.current.getBoundingClientRect();
+        setPanelStyle({
+          position: 'fixed',
+          top: Math.round(r.bottom + 6),
+          right: Math.round(Math.max(8, window.innerWidth - r.right)),
+        });
+      }
+      return next;
+    });
+  };
 
   useEffect(() => {
     if (!open) return;
@@ -81,10 +101,11 @@ export const WhoIsIn: React.FC<WhoIsInProps> = ({
   const overflow = peopleCount - stackForAvatars.length;
 
   return (
-    <div className="relative" ref={ref}>
+    <div className="relative inline-flex" ref={ref}>
       <button
-        onClick={() => setOpen((o) => !o)}
-        className={`flex items-center gap-2 pl-1.5 pr-3 py-1.5 rounded-full border transition-all duration-150 cursor-pointer active:scale-[0.98] ${
+        ref={btnRef}
+        onClick={toggle}
+        className={`flex items-center gap-1.5 pl-1 pr-2.5 py-1 rounded-full border transition-all duration-150 cursor-pointer active:scale-[0.98] ${
           open
             ? 'bg-slate-900 text-white border-slate-900'
             : 'bg-white text-slate-700 border-slate-200 hover:border-slate-300 hover:bg-slate-50'
@@ -93,11 +114,11 @@ export const WhoIsIn: React.FC<WhoIsInProps> = ({
       >
         {/* Avatar stack */}
         {peopleCount > 0 ? (
-          <span className="flex -space-x-2">
+          <span className="flex -space-x-1.5">
             {stackForAvatars.map(({ m }) => (
               <span
                 key={m.id}
-                className={`w-6 h-6 rounded-full flex items-center justify-center text-[9px] font-bold ring-2 ring-white ${
+                className={`w-5 h-5 rounded-full flex items-center justify-center text-[8px] font-bold ring-2 ring-white ${
                   m.id === activeMemberId ? 'bg-[#f3705a] text-white' : 'bg-slate-800 text-white'
                 }`}
                 title={m.name}
@@ -106,22 +127,25 @@ export const WhoIsIn: React.FC<WhoIsInProps> = ({
               </span>
             ))}
             {overflow > 0 && (
-              <span className="w-6 h-6 rounded-full flex items-center justify-center text-[9px] font-bold ring-2 ring-white bg-slate-200 text-slate-600">
+              <span className="w-5 h-5 rounded-full flex items-center justify-center text-[8px] font-bold ring-2 ring-white bg-slate-200 text-slate-600">
                 +{overflow}
               </span>
             )}
           </span>
         ) : (
-          <span className="w-6 h-6 rounded-full flex items-center justify-center bg-slate-100 text-slate-400">
-            <Users className="w-3.5 h-3.5" />
+          <span className="w-5 h-5 rounded-full flex items-center justify-center bg-slate-100 text-slate-400">
+            <Users className="w-3 h-3" />
           </span>
         )}
-        <span className="text-xs font-semibold tabular-nums">{peopleCount} in today</span>
+        <span className="text-[11px] font-semibold tabular-nums whitespace-nowrap">{peopleCount} in</span>
         <ChevronDown className={`w-3 h-3 transition-transform duration-200 ${open ? 'rotate-180' : ''}`} />
       </button>
 
       {open && (
-        <div className="absolute right-0 top-full mt-2 w-72 bg-white border border-slate-200 rounded-2xl shadow-xl z-50 overflow-hidden flex flex-col max-h-[70vh]">
+        <div
+          style={panelStyle}
+          className="w-[min(18rem,calc(100vw-1rem))] bg-white border border-slate-200 rounded-2xl shadow-xl z-[60] overflow-hidden flex flex-col max-h-[70vh]"
+        >
           <div className="px-4 py-3 border-b border-slate-100 flex items-center justify-between">
             <div>
               <p className="text-sm font-semibold text-slate-900">In the office today</p>
