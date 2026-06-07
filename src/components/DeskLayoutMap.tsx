@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Desk, Booking, TeamMember, DayOfWeek } from '../types';
-import { ZoomIn, ZoomOut, Copy, RotateCcw, Check, MonitorOff, PenTool } from 'lucide-react';
+import { ZoomIn, ZoomOut, Copy, RotateCcw, Check, MonitorOff, PenTool, PawPrint } from 'lucide-react';
 import floorPlanLandscape from '../assets/floor-plan.webp';
 import floorPlanPortrait from '../assets/floor-plan-mobile.webp';
 import { useIsMobile } from '../lib/hooks';
@@ -282,23 +282,41 @@ export const DeskLayoutMap: React.FC<DeskLayoutMapProps> = ({
     return () => resizeObserver.disconnect();
   }, [autoFit, imgWidth, imgHeight]);
 
-  // Bookings indexed by deskId for activeDay
+  const dogIds = React.useMemo(
+    () => new Set(teamMembers.filter((m) => m.isDog).map((m) => m.id)),
+    [teamMembers],
+  );
+
+  // HUMAN bookings indexed by deskId for activeDay — dogs share desks and
+  // must not mark a desk as occupied.
   const bookingsByDesk = React.useMemo(() => {
     const map: Record<number, Booking> = {};
     bookings
-      .filter((b) => b.day === activeDay && b.deskId !== null)
+      .filter((b) => b.day === activeDay && b.deskId !== null && !dogIds.has(b.memberId))
       .forEach((b) => {
         if (b.deskId) map[b.deskId] = b;
       });
     return map;
-  }, [bookings, activeDay]);
+  }, [bookings, activeDay, dogIds]);
+
+  // Dogs sitting AT a desk (with their owner) — drives the paw badge.
+  const dogsByDesk = React.useMemo(() => {
+    const map: Record<number, TeamMember[]> = {};
+    bookings
+      .filter((b) => b.day === activeDay && b.deskId !== null && dogIds.has(b.memberId))
+      .forEach((b) => {
+        const dog = teamMembers.find((m) => m.id === b.memberId);
+        if (dog && b.deskId) (map[b.deskId] ??= []).push(dog);
+      });
+    return map;
+  }, [bookings, activeDay, dogIds, teamMembers]);
 
   const getMemberById = (id: string) => teamMembers.find((m) => m.id === id);
 
-  // Dogs booked in office today
+  // Dogs on the PUP BED today (desk-sitting dogs show on their desk instead)
   const bookedDogs = React.useMemo(() => {
     return bookings
-      .filter((b) => b.day === activeDay && b.status === 'booked')
+      .filter((b) => b.day === activeDay && b.status === 'booked' && b.deskId === null)
       .map((b) => teamMembers.find((m) => m.id === b.memberId))
       .filter((m): m is TeamMember => !!m && !!m.isDog);
   }, [bookings, activeDay, teamMembers]);
@@ -318,6 +336,7 @@ export const DeskLayoutMap: React.FC<DeskLayoutMapProps> = ({
 
     const booking = bookingsByDesk[desk.id];
     const member = booking ? getMemberById(booking.memberId) : null;
+    const deskDogs = dogsByDesk[desk.id] ?? [];
     const isHovered = hoveredDesk === desk.id;
     const isSearched = doesDeskMatchSearch(desk.id);
     const isActiveUserHere = !!activeMemberId && !!booking && booking.memberId === activeMemberId;
@@ -359,7 +378,11 @@ export const DeskLayoutMap: React.FC<DeskLayoutMapProps> = ({
               : isActiveUserHere
                 ? 'ring-2 ring-slate-900 scale-[1.03] bg-red-600/45'
                 : isHovered
-                  ? 'ring-2 ring-slate-900/70 bg-white/15 scale-[1.04] shadow-md'
+                  // Booked desks KEEP their red fill on hover — only the ring
+                  // and scale change, so red never flashes green mid-hover.
+                  ? `ring-2 ring-slate-900/70 scale-[1.04] shadow-md ${
+                      isBooked ? 'bg-red-600/50' : 'bg-white/15'
+                    }`
                   : isEditing
                     ? 'ring-1 ring-dashed ring-red-500/70 bg-red-500/10'
                     : isBooked
@@ -368,6 +391,18 @@ export const DeskLayoutMap: React.FC<DeskLayoutMapProps> = ({
           }`}
           style={{ transformOrigin: 'center' }}
         />
+
+        {/* Paw badge — a dog is sitting at this desk with its owner */}
+        {!isEditing && deskDogs.length > 0 && (
+          <div className="absolute bottom-0.5 right-0.5 pointer-events-none z-10">
+            <span
+              className="flex items-center justify-center w-3.5 h-3.5 rounded-full bg-amber-400 text-white shadow-sm ring-1 ring-white/80"
+              title={deskDogs.map((d) => d.name).join(', ')}
+            >
+              <PawPrint className="w-2 h-2" />
+            </span>
+          </div>
+        )}
 
         {/* Desk-type badge — persistent corner chip so design / no-screen desks
             read at a glance without hover (mobile has no hover at all).
@@ -432,7 +467,14 @@ export const DeskLayoutMap: React.FC<DeskLayoutMapProps> = ({
           <div className="absolute left-1/2 -translate-x-1/2 -top-2 -translate-y-full bg-slate-900 text-white rounded-lg shadow-xl z-50 pointer-events-none whitespace-nowrap px-2.5 py-1.5">
             {booking ? (
               <>
-                <p className="text-[11px] font-semibold leading-tight">{member?.name}</p>
+                <p className="text-[11px] font-semibold leading-tight">
+                  {member?.name}
+                  {deskDogs.length > 0 && (
+                    <span className="text-amber-300">
+                      {' '}· 🐾 {deskDogs.map((d) => d.name).join(', ')}
+                    </span>
+                  )}
+                </p>
                 <p className="text-[9px] text-slate-400 leading-tight mt-0.5">
                   Desk {desk.number} · click to edit
                 </p>

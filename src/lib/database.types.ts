@@ -74,6 +74,9 @@ export type Database = {
           desk_id: number | null;
           status: BookingStatus;
           booked_by: string | null;
+          // Denormalised from team_members by the set_booking_is_dog trigger;
+          // clients never write it.
+          is_dog: boolean;
           created_at: string;
           updated_at: string;
         };
@@ -85,6 +88,7 @@ export type Database = {
           desk_id?: number | null;
           status: BookingStatus;
           booked_by?: string | null;
+          is_dog?: boolean;
           created_at?: string;
           updated_at?: string;
         };
@@ -96,6 +100,7 @@ export type Database = {
           desk_id?: number | null;
           status?: BookingStatus;
           booked_by?: string | null;
+          is_dog?: boolean;
           created_at?: string;
           updated_at?: string;
         };

@@ -125,8 +125,10 @@ export async function fetchBookingsForWeek(weekId: string): Promise<Booking[]> {
   return (data as DbBooking[]).map(toBooking);
 }
 
-// Save a booking. If booking a specific desk, evicts any existing occupant
-// of that desk on the same week+day first.
+// Save a booking. If a HUMAN books a specific desk, evicts any existing human
+// occupant of that desk on the same week+day first. Dogs share desks with
+// humans (is_dog rows are exempt from the unique index), so dog bookings
+// never evict anyone and humans never evict a dog.
 // `bookedBy` records WHO performed the save (the active team member from the
 // dropdown). It can differ from `memberId` if e.g. Sarah books on behalf of Diviyaj.
 export async function saveBooking(args: {
@@ -136,14 +138,16 @@ export async function saveBooking(args: {
   deskId: number | null;
   status: 'booked' | 'sofa_surf' | 'wfh';
   bookedBy: string | null;
+  isDog?: boolean;
 }): Promise<void> {
-  if (args.status === 'booked' && args.deskId !== null) {
+  if (args.status === 'booked' && args.deskId !== null && !args.isDog) {
     const { error: evictErr } = await supabase
       .from('bookings')
       .delete()
       .eq('week_id', args.weekId)
       .eq('day', args.day)
       .eq('desk_id', args.deskId)
+      .eq('is_dog', false)
       .neq('member_id', args.memberId);
     if (evictErr) throw evictErr;
   }
