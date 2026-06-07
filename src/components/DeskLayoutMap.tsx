@@ -6,11 +6,11 @@ import floorPlanPortrait from '../assets/floor-plan-mobile.webp';
 import { useIsMobile } from '../lib/hooks';
 
 type HotspotPos = { x: number; y: number; w: number; h: number };
-// Landscape v3: bumped for the 2026-06-07 floor-plan image (door + windows
-// context, clean desks). Every browser had v2 positions persisted, so the key
-// bump is what makes them all pick up the new committed defaults.
-// Portrait stays v2 (its image is unchanged).
-const STORAGE_KEY_LANDSCAPE = 'desk_hotspot_positions_landscape_v3';
+// Landscape v5: Diviyaj's final calibration pass on the 2026-06-07 image
+// (pup bed + desks 14–17 refined). Bump the key on EVERY committed
+// recalibration — all browsers persist positions, so without the bump
+// they'd shadow the new defaults. Portrait stays v2 (image unchanged).
+const STORAGE_KEY_LANDSCAPE = 'desk_hotspot_positions_landscape_v5';
 const STORAGE_KEY_PORTRAIT = 'desk_hotspot_positions_portrait_v2';
 
 interface DeskLayoutMapProps {
@@ -34,48 +34,49 @@ interface DeskLayoutMapProps {
 // Two sets: landscape image for desktop (1916×821), portrait image for mobile (941×1672).
 // Both are calibrated visually with the in-app Hot/drag/resize tool when Hot is on.
 const LANDSCAPE_HOTSPOTS: Record<number, HotspotPos> = {
-  // Calibrated by Diviyaj 2026-06-07 against the door+windows floor plan.
+  // Calibrated by Diviyaj 2026-06-07 (second pass) against the door+windows
+  // floor plan.
   // TABLE A (left, 10 desks, 5 rows × 2 cols)
-  5:  { x: 18.42, y: 22.74, w: 4.98, h: 10.20 }, // no-screen top
-  6:  { x: 25.90, y: 22.80, w: 5.16, h: 10.46 }, // no-screen top
-  4:  { x: 18.35, y: 34.29, w: 5.07, h: 10.05 },
-  7:  { x: 25.84, y: 34.36, w: 5.21, h: 9.99 },
-  3:  { x: 18.25, y: 45.93, w: 5.16, h: 9.82 },
-  8:  { x: 25.75, y: 45.74, w: 5.31, h: 10.04 }, // design
-  2:  { x: 18.20, y: 57.19, w: 5.20, h: 10.00 },
-  9:  { x: 25.81, y: 57.25, w: 5.17, h: 9.86 },
-  1:  { x: 18.19, y: 68.48, w: 5.12, h: 10.18 },
-  10: { x: 25.73, y: 68.65, w: 5.28, h: 10.39 },
+  5:  { x: 18.39, y: 22.77, w: 5.27, h: 10.04 }, // no-screen top
+  6:  { x: 25.95, y: 22.72, w: 5.18, h: 10.35 }, // no-screen top
+  4:  { x: 18.38, y: 34.37, w: 5.23, h: 10.05 },
+  7:  { x: 25.87, y: 34.39, w: 5.19, h: 10.15 },
+  3:  { x: 18.27, y: 45.85, w: 5.25, h: 10.25 },
+  8:  { x: 25.82, y: 45.82, w: 5.22, h: 10.15 }, // design
+  2:  { x: 18.24, y: 57.20, w: 5.18, h: 9.89 },
+  9:  { x: 25.78, y: 57.17, w: 5.29, h: 9.97 },
+  1:  { x: 18.19, y: 68.67, w: 5.25, h: 10.23 },
+  10: { x: 25.72, y: 68.68, w: 5.25, h: 10.28 },
 
   // TABLE B (middle, 8 desks, 4 rows × 2 cols)
-  14: { x: 46.72, y: 25.90, w: 5.22, h: 10.68 }, // no-screen top
-  15: { x: 54.23, y: 26.14, w: 5.28, h: 10.50 }, // no-screen top
-  13: { x: 46.69, y: 37.79, w: 5.15, h: 10.14 },
-  16: { x: 54.22, y: 38.02, w: 5.37, h: 10.52 }, // design
-  12: { x: 46.73, y: 49.68, w: 5.32, h: 10.46 }, // design
-  17: { x: 54.29, y: 49.80, w: 5.31, h: 11.12 },
-  11: { x: 46.69, y: 61.97, w: 5.34, h: 11.09 },
-  18: { x: 54.30, y: 61.82, w: 5.34, h: 10.81 }, // design
+  14: { x: 46.67, y: 26.07, w: 5.04, h: 10.92 }, // no-screen top
+  15: { x: 54.26, y: 26.17, w: 5.39, h: 11.03 }, // no-screen top
+  13: { x: 46.65, y: 38.02, w: 5.30, h: 10.59 },
+  16: { x: 54.31, y: 37.99, w: 5.45, h: 9.96 }, // design
+  12: { x: 46.73, y: 49.72, w: 5.36, h: 11.02 }, // design
+  17: { x: 54.18, y: 49.63, w: 5.34, h: 10.79 },
+  11: { x: 46.70, y: 61.99, w: 5.30, h: 11.27 },
+  18: { x: 54.27, y: 61.94, w: 5.49, h: 10.90 }, // design
 
   // TABLE C (right, 12 desks, 6 rows × 2 cols)
-  24: { x: 76.42, y: 18.39, w: 5.16, h: 10.25 }, // no-screen top
-  25: { x: 83.90, y: 18.37, w: 5.09, h: 10.24 }, // no-screen top
-  23: { x: 76.50, y: 29.90, w: 5.31, h: 10.66 }, // no-screen
-  26: { x: 84.03, y: 29.94, w: 5.28, h: 10.42 },
-  22: { x: 76.52, y: 41.20, w: 5.13, h: 10.32 },
-  27: { x: 84.17, y: 41.28, w: 5.44, h: 10.27 },
-  21: { x: 76.57, y: 52.80, w: 5.35, h: 10.08 }, // design
-  28: { x: 84.20, y: 52.87, w: 5.33, h: 10.49 },
-  20: { x: 76.62, y: 64.39, w: 5.12, h: 10.20 },
-  29: { x: 84.31, y: 64.37, w: 5.36, h: 10.32 },
-  19: { x: 76.70, y: 76.52, w: 5.32, h: 11.16 },
-  30: { x: 84.40, y: 76.61, w: 5.36, h: 11.26 },
+  24: { x: 76.48, y: 18.47, w: 5.22, h: 10.41 }, // no-screen top
+  25: { x: 83.93, y: 18.40, w: 5.23, h: 10.29 }, // no-screen top
+  23: { x: 76.54, y: 29.57, w: 5.16, h: 9.98 }, // no-screen
+  26: { x: 84.07, y: 29.69, w: 5.19, h: 10.06 },
+  22: { x: 76.58, y: 41.17, w: 5.42, h: 10.70 },
+  27: { x: 84.12, y: 41.17, w: 5.37, h: 9.82 },
+  21: { x: 76.65, y: 52.66, w: 5.26, h: 10.01 }, // design
+  28: { x: 84.28, y: 53.03, w: 5.36, h: 9.97 },
+  20: { x: 76.65, y: 64.44, w: 5.28, h: 10.42 },
+  29: { x: 84.30, y: 64.32, w: 5.43, h: 10.43 },
+  19: { x: 76.67, y: 76.41, w: 5.49, h: 11.17 },
+  30: { x: 84.49, y: 76.56, w: 5.53, h: 11.27 },
 };
 
 // Pup-bed clickable hotspot — same HotspotPos shape as desks so it can be
 // calibrated with the in-app Hot tool (sentinel id 0 in livePositions below).
 // Click opens the booking modal in "pup-booking" mode (dogs only, no desk).
-const PUP_BED_LANDSCAPE: HotspotPos = { x: 50.19, y: 84.13, w: 9.06, h: 12.86 };
+const PUP_BED_LANDSCAPE: HotspotPos = { x: 50.33, y: 84.44, w: 7.09, h: 7.92 };
 const PUP_BED_PORTRAIT: HotspotPos = { x: 5.81, y: 72.78, w: 8.89, h: 4.98 };
 
 // Portrait hotspots — calibrated visually with the in-app Hot tool against the
@@ -466,7 +467,15 @@ export const DeskLayoutMap: React.FC<DeskLayoutMapProps> = ({
           );
         })() : (
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-            <span className="text-[11px] font-semibold text-white leading-none tabular-nums">
+            {/* Bare numeral in Space Grotesk — a soft text-shadow keeps it
+                legible on the green mat without any backing chip. */}
+            <span
+              className="text-[10px] font-semibold text-white leading-none tabular-nums"
+              style={{
+                fontFamily: 'var(--font-display)',
+                textShadow: '0 1px 1.5px rgba(0,0,0,0.35)',
+              }}
+            >
               {desk.number}
             </span>
           </div>
