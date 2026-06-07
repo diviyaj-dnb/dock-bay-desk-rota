@@ -134,6 +134,29 @@ export async function deleteBooking(
   if (error) throw error;
 }
 
+// Announcement banner — single row (id=1). Empty message means the app
+// shows its default attendance reminder.
+export async function fetchAnnouncement(): Promise<string> {
+  const { data, error } = await supabase
+    .from('announcements')
+    .select('message')
+    .eq('id', 1)
+    .maybeSingle();
+  if (error) throw error;
+  return data?.message ?? '';
+}
+
+export async function saveAnnouncement(
+  message: string,
+  updatedBy: string | null,
+): Promise<void> {
+  const { error } = await supabase
+    .from('announcements')
+    .update({ message, updated_by: updatedBy })
+    .eq('id', 1);
+  if (error) throw error;
+}
+
 // Wipes all bookings for `weekId`, then clones the bookings from `sourceWeekId` into it.
 export async function copyBookingsBetweenWeeks(
   sourceWeekId: string,

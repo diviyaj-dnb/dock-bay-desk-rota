@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useEffect, lazy, Suspense } from 'react';
 import { DayOfWeek } from './types';
 import { DaySelector } from './components/DaySelector';
+import { AnnouncementBanner } from './components/AnnouncementBanner';
 import { DeskLayoutMap } from './components/DeskLayoutMap';
 import { WhoIsIn } from './components/WhoIsIn';
 
@@ -751,6 +752,11 @@ export default function App() {
         </div>
 
       </div>
+
+      {/* Announcement banner — admin-editable, defaults to the attendance
+          reminder when no custom message is set. Single instance serves both
+          desktop and mobile (sits directly under whichever header is shown). */}
+      <AnnouncementBanner isAdmin={isCurrentUserAdmin} currentUserId={activeMemberId} />
 
       {/* Workspace: full-width main viewport (no padding on mobile so floor plan can fill) */}
       <div className="flex-1 w-full overflow-hidden p-0 md:p-3 bg-slate-100/30">
