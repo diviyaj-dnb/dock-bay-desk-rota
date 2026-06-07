@@ -166,18 +166,20 @@ export default function App() {
   );
   const isCurrentUserAdmin = !!me?.isAdmin && !viewAsMember;
 
-  // Rolling 1-week navigation guards — past weeks are never reachable,
-  // next week only when isNextWeekUnlocked (Fri+). ADMIN OVERRIDE: admins
-  // step freely in both directions (book visits weeks ahead, review past
-  // weeks); everyone else keeps the equal-chance Friday-unlock rule.
-  const canGoPrev = isCurrentUserAdmin || activeWeek !== currentMondayStr;
+  // Rolling 1-week navigation guards — the current week is the earliest week
+  // anyone (admins included) can reach; past weeks are never bookable. Forward:
+  // members get next week on Fri+ only; ADMINS step forward freely (book
+  // visitors weeks ahead). Backward just walks home toward the current week.
+  const canGoPrev = activeWeek !== currentMondayStr;
   const canGoNext = isCurrentUserAdmin || (isNextWeekUnlocked && activeWeek === currentMondayStr);
 
   const shiftWeek = (days: number) => {
     const [y, m, d] = activeWeek.split('-').map(Number);
     const date = new Date(y, m - 1, d);
     date.setDate(date.getDate() + days);
-    setActiveWeek(getMondayDateString(date));
+    const next = getMondayDateString(date);
+    // Never step before the current week.
+    setActiveWeek(next < currentMondayStr ? currentMondayStr : next);
   };
 
   const handlePrevWeek = () => {
@@ -293,10 +295,29 @@ export default function App() {
       if (!isCurrentUserAdmin && existingBooking.memberId !== activeMemberId) return;
       setModalMemberId(existingBooking.memberId);
       setModalDeskId(deskId);
-    } else {
-      setModalMemberId(activeMemberId);
-      setModalDeskId(deskId);
+      setIsModalOpen(true);
+      return;
     }
+
+    // No human here, but a dog might be sitting at this desk (e.g. the owner's
+    // booking was removed and the dog stayed). Admins clicking such a desk get
+    // the pup flow pre-selected to that dog so they can move it to the bed or
+    // remove it — otherwise a dog-only desk is unreachable from the map.
+    const dogBooking = currentDayBookings.find(
+      (b) => b.deskId === deskId && dogIds.has(b.memberId),
+    );
+    if (dogBooking && isCurrentUserAdmin) {
+      setModalMemberId(dogBooking.memberId);
+      setModalDeskId(null);
+      setIsPupBookingMode(true);
+      setIsModalOpen(true);
+      return;
+    }
+
+    // Empty desk (or a member clicking a dog-shared desk, which they can claim
+    // for themselves) — fresh booking.
+    setModalMemberId(activeMemberId);
+    setModalDeskId(deskId);
     setIsModalOpen(true);
   };
 
