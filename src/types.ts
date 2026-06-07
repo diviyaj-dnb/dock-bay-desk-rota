@@ -18,6 +18,9 @@ export interface TeamMember {
   isDog?: boolean;
   isDesigner?: boolean;
   isAdmin?: boolean;
+  // Only populated by fetchAllTeamMembers (admin panel); the regular
+  // fetch already filters archived rows out.
+  archived?: boolean;
 }
 
 export interface Booking {

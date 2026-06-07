@@ -57,7 +57,8 @@ export function useTeamMembers(enabled: boolean) {
     };
   }, [enabled]);
 
-  return { members, loading, error };
+  // reload: refetch after admin-panel changes (add / archive member)
+  return { members, loading, error, reload: () => fetchTeamMembers().then(setMembers) };
 }
 
 export function useDesks(enabled: boolean) {
