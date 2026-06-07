@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Desk, Booking, TeamMember, DayOfWeek } from '../types';
-import { ZoomIn, ZoomOut, Copy, RotateCcw, Check } from 'lucide-react';
+import { ZoomIn, ZoomOut, Copy, RotateCcw, Check, MonitorOff, PenTool } from 'lucide-react';
 import floorPlanLandscape from '../assets/floor-plan.webp';
 import floorPlanPortrait from '../assets/floor-plan-mobile.webp';
 import { useIsMobile } from '../lib/hooks';
@@ -365,6 +365,27 @@ export const DeskLayoutMap: React.FC<DeskLayoutMapProps> = ({
           style={{ transformOrigin: 'center' }}
         />
 
+        {/* Desk-type badge — persistent corner chip so design / no-screen desks
+            read at a glance without hover (mobile has no hover at all).
+            Hidden in calibration mode so it never blocks drag handles. */}
+        {!isEditing && desk.type !== 'regular' && (
+          <div className="absolute top-0.5 left-0.5 pointer-events-none z-10">
+            <span
+              className={`flex items-center justify-center w-3.5 h-3.5 rounded-full shadow-sm ring-1 ${
+                desk.type === 'design'
+                  ? 'bg-[#f3705a] text-white ring-white/80'
+                  : 'bg-white/95 text-slate-500 ring-slate-300'
+              }`}
+            >
+              {desk.type === 'design' ? (
+                <PenTool className="w-2 h-2" />
+              ) : (
+                <MonitorOff className="w-2 h-2" />
+              )}
+            </span>
+          </div>
+        )}
+
         {/* Resize handle — calibration mode only */}
         {isEditing && (
           <div
@@ -637,8 +658,31 @@ export const DeskLayoutMap: React.FC<DeskLayoutMapProps> = ({
       </div>
 
       {/* Zoom + calibration toolbar — lives in the white-space band below the image,
-          so it never sits on top of the floor plan (and never covers the pup bed). */}
-      <div className="flex justify-center pt-2 pb-1 shrink-0">
+          so it never sits on top of the floor plan (and never covers the pup bed).
+          The legend pill sits alongside so new starters can decode the map. */}
+      <div className="flex justify-center items-center gap-2 pt-2 pb-1 shrink-0 flex-wrap">
+        <div className="bg-white border border-slate-200 shadow-sm rounded-md px-2.5 py-1 flex items-center gap-2.5 text-[9px] font-medium text-slate-600">
+          <span className="flex items-center gap-1">
+            <span className="w-2.5 h-2.5 rounded-[3px] bg-emerald-500/70 ring-1 ring-emerald-700/30" />
+            Free
+          </span>
+          <span className="flex items-center gap-1">
+            <span className="w-2.5 h-2.5 rounded-[3px] bg-red-600/60 ring-1 ring-red-800/30" />
+            Taken
+          </span>
+          <span className="flex items-center gap-1">
+            <span className="flex items-center justify-center w-3 h-3 rounded-full bg-[#f3705a] text-white">
+              <PenTool className="w-1.5 h-1.5" />
+            </span>
+            Design
+          </span>
+          <span className="flex items-center gap-1">
+            <span className="flex items-center justify-center w-3 h-3 rounded-full bg-white ring-1 ring-slate-300 text-slate-500">
+              <MonitorOff className="w-1.5 h-1.5" />
+            </span>
+            No monitor
+          </span>
+        </div>
         <div className="bg-white border border-slate-200 shadow-sm rounded-md px-0.5 py-0.5 flex items-center gap-0.5">
           <button
             onClick={() => {
