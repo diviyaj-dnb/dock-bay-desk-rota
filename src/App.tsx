@@ -326,6 +326,30 @@ export default function App() {
     // AuthGate re-renders to the SignIn screen on the auth state change.
   };
 
+  // My booking on the selected day — drives the one-tap sofa-surf toggle.
+  const myBookingToday = useMemo(
+    () => currentDayBookings.find((b) => b.memberId === activeMemberId) ?? null,
+    [currentDayBookings, activeMemberId],
+  );
+  const amSofaSurfing = myBookingToday?.status === 'sofa_surf';
+
+  // One-tap sofa surf (Sarah's feedback): "I'm in, but don't need a desk."
+  // Tap the header chip to book yourself sofa-surfing on the selected day;
+  // tap again to undo. Holding a desk already? Confirm before releasing it.
+  const handleSofaSurfToggle = async () => {
+    if (!activeMemberId) return;
+    if (amSofaSurfing) {
+      await handleDeleteBooking(activeMemberId, activeDay);
+      return;
+    }
+    if (myBookingToday?.status === 'booked' && myBookingToday.deskId !== null) {
+      const deskNo =
+        desks.find((d) => d.id === myBookingToday.deskId)?.number ?? myBookingToday.deskId;
+      if (!window.confirm(`Release desk ${deskNo} and sofa surf instead?`)) return;
+    }
+    await handleSaveBooking(activeMemberId, activeDay, null, 'sofa_surf');
+  };
+
   return (
     <div
       className="w-screen flex flex-col bg-slate-100/50 overflow-hidden text-slate-800"
@@ -481,11 +505,32 @@ export default function App() {
             <span className="text-slate-400 tabular-nums">/ {desks.length}</span>
             <span className="text-slate-500">desks</span>
           </span>
-          <span className="group flex items-center gap-1.5 px-2 py-1 rounded-md transition-colors hover:bg-slate-50">
-            <Sofa className="w-3.5 h-3.5 text-slate-400 group-hover:text-slate-600 transition-colors" />
+          {/* Sofa-surf chip doubles as a one-tap toggle: "I'm in, no desk needed". */}
+          <button
+            type="button"
+            onClick={handleSofaSurfToggle}
+            disabled={!activeMemberId}
+            title={
+              amSofaSurfing
+                ? "You're sofa surfing — click to undo"
+                : 'In the office but no desk needed? Click to sofa surf'
+            }
+            className={`group flex items-center gap-1.5 px-2 py-1 rounded-md border transition-all duration-150 cursor-pointer active:scale-[0.97] disabled:cursor-not-allowed ${
+              amSofaSurfing
+                ? 'bg-dock-yellow/15 border-dock-yellow text-[#854d0e]'
+                : 'border-transparent hover:bg-slate-50 hover:border-slate-200'
+            }`}
+          >
+            <Sofa
+              className={`w-3.5 h-3.5 transition-colors ${
+                amSofaSurfing ? 'text-yellow-600' : 'text-slate-400 group-hover:text-slate-600'
+              }`}
+            />
             <span className="font-semibold text-slate-900 tabular-nums">{sofaSurfersCount}</span>
-            <span className="text-slate-500">sofa surfing</span>
-          </span>
+            <span className={amSofaSurfing ? 'font-medium text-[#854d0e]' : 'text-slate-500'}>
+              {amSofaSurfing ? 'sofa surfing · you' : 'sofa surfing'}
+            </span>
+          </button>
           <span className="group flex items-center gap-1.5 px-2 py-1 rounded-md transition-colors hover:bg-slate-50">
             <PawPrint className="w-3.5 h-3.5 text-slate-400 group-hover:text-slate-600 transition-colors" />
             <span className="font-semibold text-slate-900 tabular-nums">{dogsInOfficeCount}</span>
@@ -673,10 +718,21 @@ export default function App() {
             <span className="font-semibold text-slate-900 tabular-nums">{bookedDesksCount}</span>
             <span className="text-slate-400 tabular-nums">/{desks.length}</span>
           </span>
-          <span className="flex items-center gap-1 whitespace-nowrap">
-            <Sofa className="w-3 h-3 text-slate-400" />
+          {/* One-tap sofa-surf toggle (same behaviour as the desktop chip) */}
+          <button
+            type="button"
+            onClick={handleSofaSurfToggle}
+            disabled={!activeMemberId}
+            className={`flex items-center gap-1 whitespace-nowrap px-1.5 py-0.5 -my-0.5 rounded-md border transition-all active:scale-[0.97] disabled:cursor-not-allowed ${
+              amSofaSurfing
+                ? 'bg-dock-yellow/15 border-dock-yellow'
+                : 'border-transparent'
+            }`}
+          >
+            <Sofa className={`w-3 h-3 ${amSofaSurfing ? 'text-yellow-600' : 'text-slate-400'}`} />
             <span className="font-semibold text-slate-900 tabular-nums">{sofaSurfersCount}</span>
-          </span>
+            {amSofaSurfing && <span className="font-medium text-[#854d0e]">you</span>}
+          </button>
           <span className="flex items-center gap-1 whitespace-nowrap">
             <PawPrint className="w-3 h-3 text-slate-400" />
             <span className="font-semibold text-slate-900 tabular-nums">{dogsInOfficeCount}</span>
