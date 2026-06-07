@@ -1,16 +1,16 @@
 import React, { useState } from 'react';
 import { Desk, Booking, TeamMember, DayOfWeek } from '../types';
-import { ZoomIn, ZoomOut, Copy, RotateCcw, Check, MonitorOff, PenTool } from 'lucide-react';
+import { ZoomIn, ZoomOut, Copy, RotateCcw, Check, MonitorOff, PenTool, PawPrint } from 'lucide-react';
 import floorPlanLandscape from '../assets/floor-plan.webp';
 import floorPlanPortrait from '../assets/floor-plan-mobile.webp';
 import { useIsMobile } from '../lib/hooks';
 
 type HotspotPos = { x: number; y: number; w: number; h: number };
-// v2: bumped after v2.0.1 calibration locked in. Older localStorage entries
-// (from session-time drags that were never pasted back) are now ignored so
-// every browser starts from the committed defaults. Re-calibrators just
-// re-save under v2.
-const STORAGE_KEY_LANDSCAPE = 'desk_hotspot_positions_landscape_v2';
+// Landscape v3: bumped for the 2026-06-07 floor-plan image (door + windows
+// context, clean desks). Every browser had v2 positions persisted, so the key
+// bump is what makes them all pick up the new committed defaults.
+// Portrait stays v2 (its image is unchanged).
+const STORAGE_KEY_LANDSCAPE = 'desk_hotspot_positions_landscape_v3';
 const STORAGE_KEY_PORTRAIT = 'desk_hotspot_positions_portrait_v2';
 
 interface DeskLayoutMapProps {
@@ -22,6 +22,9 @@ interface DeskLayoutMapProps {
   onDeskClick: (deskId: number) => void;
   onPupBedClick: () => void;
   searchQuery: string;
+  // Admins can edit anyone's booking; members only their own — drives the
+  // tooltip wording and pointer cursor on taken desks.
+  isAdmin?: boolean;
   // Slot rendered on the right of the card header (desktop only) — used for
   // the announcement banner pill so it sits in the floor plan's white space.
   headerExtra?: React.ReactNode;
@@ -31,47 +34,48 @@ interface DeskLayoutMapProps {
 // Two sets: landscape image for desktop (1916×821), portrait image for mobile (941×1672).
 // Both are calibrated visually with the in-app Hot/drag/resize tool when Hot is on.
 const LANDSCAPE_HOTSPOTS: Record<number, HotspotPos> = {
+  // Calibrated by Diviyaj 2026-06-07 against the door+windows floor plan.
   // TABLE A (left, 10 desks, 5 rows × 2 cols)
-  5:  { x: 17.89, y: 23.87, w: 5.34, h: 10.84 }, // no-screen top
-  6:  { x: 25.50, y: 23.73, w: 5.32, h: 11.10 }, // no-screen top
-  4:  { x: 17.84, y: 36.04, w: 5.34, h: 10.69 },
-  7:  { x: 25.47, y: 36.04, w: 5.37, h: 10.79 },
-  3:  { x: 17.79, y: 47.92, w: 5.32, h: 10.52 },
-  8:  { x: 25.47, y: 47.97, w: 5.38, h: 10.52 }, // design
-  2:  { x: 17.71, y: 59.74, w: 5.30, h: 10.27 },
-  9:  { x: 25.39, y: 59.83, w: 5.31, h: 10.61 },
-  1:  { x: 17.66, y: 71.48, w: 5.27, h: 10.76 },
-  10: { x: 25.37, y: 71.59, w: 5.39, h: 10.71 },
+  5:  { x: 18.42, y: 22.74, w: 4.98, h: 10.20 }, // no-screen top
+  6:  { x: 25.90, y: 22.80, w: 5.16, h: 10.46 }, // no-screen top
+  4:  { x: 18.35, y: 34.29, w: 5.07, h: 10.05 },
+  7:  { x: 25.84, y: 34.36, w: 5.21, h: 9.99 },
+  3:  { x: 18.25, y: 45.93, w: 5.16, h: 9.82 },
+  8:  { x: 25.75, y: 45.74, w: 5.31, h: 10.04 }, // design
+  2:  { x: 18.20, y: 57.19, w: 5.20, h: 10.00 },
+  9:  { x: 25.81, y: 57.25, w: 5.17, h: 9.86 },
+  1:  { x: 18.19, y: 68.48, w: 5.12, h: 10.18 },
+  10: { x: 25.73, y: 68.65, w: 5.28, h: 10.39 },
 
   // TABLE B (middle, 8 desks, 4 rows × 2 cols)
-  14: { x: 46.80, y: 27.36, w: 5.38, h: 11.27 }, // no-screen top
-  15: { x: 54.43, y: 27.23, w: 5.49, h: 11.41 }, // no-screen top
-  13: { x: 46.76, y: 39.76, w: 5.38, h: 10.89 },
-  16: { x: 54.46, y: 39.69, w: 5.35, h: 10.79 }, // design
-  12: { x: 46.77, y: 52.14, w: 5.16, h: 11.34 }, // design
-  17: { x: 54.46, y: 52.06, w: 5.43, h: 11.13 },
-  11: { x: 46.75, y: 64.72, w: 5.35, h: 11.28 },
-  18: { x: 54.49, y: 64.76, w: 5.47, h: 11.23 }, // design
+  14: { x: 46.72, y: 25.90, w: 5.22, h: 10.68 }, // no-screen top
+  15: { x: 54.23, y: 26.14, w: 5.28, h: 10.50 }, // no-screen top
+  13: { x: 46.69, y: 37.79, w: 5.15, h: 10.14 },
+  16: { x: 54.22, y: 38.02, w: 5.37, h: 10.52 }, // design
+  12: { x: 46.73, y: 49.68, w: 5.32, h: 10.46 }, // design
+  17: { x: 54.29, y: 49.80, w: 5.31, h: 11.12 },
+  11: { x: 46.69, y: 61.97, w: 5.34, h: 11.09 },
+  18: { x: 54.30, y: 61.82, w: 5.34, h: 10.81 }, // design
 
   // TABLE C (right, 12 desks, 6 rows × 2 cols)
-  24: { x: 76.84, y: 19.14, w: 5.27, h: 10.99 }, // no-screen top
-  25: { x: 84.59, y: 19.28, w: 5.28, h: 11.09 }, // no-screen top
-  23: { x: 76.96, y: 31.24, w: 5.14, h: 10.46 }, // no-screen
-  26: { x: 84.72, y: 31.47, w: 5.58, h: 10.75 },
-  22: { x: 77.03, y: 43.06, w: 5.17, h: 10.81 },
-  27: { x: 84.73, y: 43.25, w: 5.63, h: 10.90 },
-  21: { x: 77.09, y: 55.25, w: 5.51, h: 10.72 }, // design
-  28: { x: 84.84, y: 55.24, w: 5.38, h: 10.87 },
-  20: { x: 77.16, y: 67.18, w: 5.51, h: 11.00 },
-  29: { x: 84.97, y: 67.30, w: 5.59, h: 10.86 },
-  19: { x: 77.21, y: 79.54, w: 5.51, h: 11.65 },
-  30: { x: 85.05, y: 79.71, w: 5.55, h: 11.80 },
+  24: { x: 76.42, y: 18.39, w: 5.16, h: 10.25 }, // no-screen top
+  25: { x: 83.90, y: 18.37, w: 5.09, h: 10.24 }, // no-screen top
+  23: { x: 76.50, y: 29.90, w: 5.31, h: 10.66 }, // no-screen
+  26: { x: 84.03, y: 29.94, w: 5.28, h: 10.42 },
+  22: { x: 76.52, y: 41.20, w: 5.13, h: 10.32 },
+  27: { x: 84.17, y: 41.28, w: 5.44, h: 10.27 },
+  21: { x: 76.57, y: 52.80, w: 5.35, h: 10.08 }, // design
+  28: { x: 84.20, y: 52.87, w: 5.33, h: 10.49 },
+  20: { x: 76.62, y: 64.39, w: 5.12, h: 10.20 },
+  29: { x: 84.31, y: 64.37, w: 5.36, h: 10.32 },
+  19: { x: 76.70, y: 76.52, w: 5.32, h: 11.16 },
+  30: { x: 84.40, y: 76.61, w: 5.36, h: 11.26 },
 };
 
 // Pup-bed clickable hotspot — same HotspotPos shape as desks so it can be
 // calibrated with the in-app Hot tool (sentinel id 0 in livePositions below).
 // Click opens the booking modal in "pup-booking" mode (dogs only, no desk).
-const PUP_BED_LANDSCAPE: HotspotPos = { x: 47.70, y: 84.86, w: 2.73, h: 7.38 };
+const PUP_BED_LANDSCAPE: HotspotPos = { x: 50.19, y: 84.13, w: 9.06, h: 12.86 };
 const PUP_BED_PORTRAIT: HotspotPos = { x: 5.81, y: 72.78, w: 8.89, h: 4.98 };
 
 // Portrait hotspots — calibrated visually with the in-app Hot tool against the
@@ -123,6 +127,7 @@ export const DeskLayoutMap: React.FC<DeskLayoutMapProps> = ({
   onDeskClick,
   onPupBedClick,
   searchQuery,
+  isAdmin = false,
   headerExtra,
 }) => {
   const [hoveredDesk, setHoveredDesk] = useState<number | null>(null);
@@ -135,8 +140,8 @@ export const DeskLayoutMap: React.FC<DeskLayoutMapProps> = ({
   const isMobile = useIsMobile();
   const orientation: 'portrait' | 'landscape' = isMobile ? 'portrait' : 'landscape';
   const imgSrc = isMobile ? floorPlanPortrait : floorPlanLandscape;
-  const imgWidth = isMobile ? 897 : 1916;
-  const imgHeight = isMobile ? 1754 : 821;
+  const imgWidth = isMobile ? 897 : 1918;
+  const imgHeight = isMobile ? 1754 : 820;
   // Pup-bed hotspot lives in livePositions under sentinel id 0 so it participates
   // in the same drag/resize/persist/export pipeline as the desks.
   const defaultPupBed = isMobile ? PUP_BED_PORTRAIT : PUP_BED_LANDSCAPE;
@@ -282,23 +287,41 @@ export const DeskLayoutMap: React.FC<DeskLayoutMapProps> = ({
     return () => resizeObserver.disconnect();
   }, [autoFit, imgWidth, imgHeight]);
 
-  // Bookings indexed by deskId for activeDay
+  const dogIds = React.useMemo(
+    () => new Set(teamMembers.filter((m) => m.isDog).map((m) => m.id)),
+    [teamMembers],
+  );
+
+  // HUMAN bookings indexed by deskId for activeDay — dogs share desks and
+  // must not mark a desk as occupied.
   const bookingsByDesk = React.useMemo(() => {
     const map: Record<number, Booking> = {};
     bookings
-      .filter((b) => b.day === activeDay && b.deskId !== null)
+      .filter((b) => b.day === activeDay && b.deskId !== null && !dogIds.has(b.memberId))
       .forEach((b) => {
         if (b.deskId) map[b.deskId] = b;
       });
     return map;
-  }, [bookings, activeDay]);
+  }, [bookings, activeDay, dogIds]);
+
+  // Dogs sitting AT a desk (with their owner) — drives the paw badge.
+  const dogsByDesk = React.useMemo(() => {
+    const map: Record<number, TeamMember[]> = {};
+    bookings
+      .filter((b) => b.day === activeDay && b.deskId !== null && dogIds.has(b.memberId))
+      .forEach((b) => {
+        const dog = teamMembers.find((m) => m.id === b.memberId);
+        if (dog && b.deskId) (map[b.deskId] ??= []).push(dog);
+      });
+    return map;
+  }, [bookings, activeDay, dogIds, teamMembers]);
 
   const getMemberById = (id: string) => teamMembers.find((m) => m.id === id);
 
-  // Dogs booked in office today
+  // Dogs on the PUP BED today (desk-sitting dogs show on their desk instead)
   const bookedDogs = React.useMemo(() => {
     return bookings
-      .filter((b) => b.day === activeDay && b.status === 'booked')
+      .filter((b) => b.day === activeDay && b.status === 'booked' && b.deskId === null)
       .map((b) => teamMembers.find((m) => m.id === b.memberId))
       .filter((m): m is TeamMember => !!m && !!m.isDog);
   }, [bookings, activeDay, teamMembers]);
@@ -318,6 +341,10 @@ export const DeskLayoutMap: React.FC<DeskLayoutMapProps> = ({
 
     const booking = bookingsByDesk[desk.id];
     const member = booking ? getMemberById(booking.memberId) : null;
+    const deskDogs = dogsByDesk[desk.id] ?? [];
+    // Members can only manage their own booking — on someone else's taken
+    // desk the click is a no-op, so don't advertise editing.
+    const canManage = !booking || isAdmin || booking.memberId === activeMemberId;
     const isHovered = hoveredDesk === desk.id;
     const isSearched = doesDeskMatchSearch(desk.id);
     const isActiveUserHere = !!activeMemberId && !!booking && booking.memberId === activeMemberId;
@@ -340,7 +367,9 @@ export const DeskLayoutMap: React.FC<DeskLayoutMapProps> = ({
           }
           onDeskClick(desk.id);
         }}
-        className={`absolute group ${isEditing ? 'cursor-move' : 'cursor-pointer'}`}
+        className={`absolute group ${
+          isEditing ? 'cursor-move' : canManage ? 'cursor-pointer' : 'cursor-default'
+        }`}
         style={{
           left: `${pos.x - pos.w / 2}%`,
           top: `${pos.y - pos.h / 2}%`,
@@ -359,7 +388,11 @@ export const DeskLayoutMap: React.FC<DeskLayoutMapProps> = ({
               : isActiveUserHere
                 ? 'ring-2 ring-slate-900 scale-[1.03] bg-red-600/45'
                 : isHovered
-                  ? 'ring-2 ring-slate-900/70 bg-white/15 scale-[1.04] shadow-md'
+                  // Booked desks KEEP their red fill on hover — only the ring
+                  // and scale change, so red never flashes green mid-hover.
+                  ? `ring-2 ring-slate-900/70 scale-[1.04] shadow-md ${
+                      isBooked ? 'bg-red-600/50' : 'bg-white/15'
+                    }`
                   : isEditing
                     ? 'ring-1 ring-dashed ring-red-500/70 bg-red-500/10'
                     : isBooked
@@ -368,6 +401,18 @@ export const DeskLayoutMap: React.FC<DeskLayoutMapProps> = ({
           }`}
           style={{ transformOrigin: 'center' }}
         />
+
+        {/* Paw badge — a dog is sitting at this desk with its owner */}
+        {!isEditing && deskDogs.length > 0 && (
+          <div className="absolute bottom-0.5 right-0.5 pointer-events-none z-10">
+            <span
+              className="flex items-center justify-center w-3.5 h-3.5 rounded-full bg-amber-400 text-white shadow-sm ring-1 ring-white/80"
+              title={deskDogs.map((d) => d.name).join(', ')}
+            >
+              <PawPrint className="w-2 h-2" />
+            </span>
+          </div>
+        )}
 
         {/* Desk-type badge — persistent corner chip so design / no-screen desks
             read at a glance without hover (mobile has no hover at all).
@@ -432,9 +477,16 @@ export const DeskLayoutMap: React.FC<DeskLayoutMapProps> = ({
           <div className="absolute left-1/2 -translate-x-1/2 -top-2 -translate-y-full bg-slate-900 text-white rounded-lg shadow-xl z-50 pointer-events-none whitespace-nowrap px-2.5 py-1.5">
             {booking ? (
               <>
-                <p className="text-[11px] font-semibold leading-tight">{member?.name}</p>
+                <p className="text-[11px] font-semibold leading-tight">
+                  {member?.name}
+                  {deskDogs.length > 0 && (
+                    <span className="text-amber-300">
+                      {' '}· 🐾 {deskDogs.map((d) => d.name).join(', ')}
+                    </span>
+                  )}
+                </p>
                 <p className="text-[9px] text-slate-400 leading-tight mt-0.5">
-                  Desk {desk.number} · click to edit
+                  Desk {desk.number} · {canManage ? 'click to edit' : 'taken'}
                 </p>
               </>
             ) : (

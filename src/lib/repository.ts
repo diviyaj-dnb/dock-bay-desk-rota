@@ -125,8 +125,10 @@ export async function fetchBookingsForWeek(weekId: string): Promise<Booking[]> {
   return (data as DbBooking[]).map(toBooking);
 }
 
-// Save a booking. If booking a specific desk, evicts any existing occupant
-// of that desk on the same week+day first.
+// Save a booking. If a HUMAN books a specific desk, evicts any existing human
+// occupant of that desk on the same week+day first. Dogs share desks with
+// humans (is_dog rows are exempt from the unique index), so dog bookings
+// never evict anyone and humans never evict a dog.
 // `bookedBy` records WHO performed the save (the active team member from the
 // dropdown). It can differ from `memberId` if e.g. Sarah books on behalf of Diviyaj.
 export async function saveBooking(args: {
@@ -136,14 +138,16 @@ export async function saveBooking(args: {
   deskId: number | null;
   status: 'booked' | 'sofa_surf' | 'wfh';
   bookedBy: string | null;
+  isDog?: boolean;
 }): Promise<void> {
-  if (args.status === 'booked' && args.deskId !== null) {
+  if (args.status === 'booked' && args.deskId !== null && !args.isDog) {
     const { error: evictErr } = await supabase
       .from('bookings')
       .delete()
       .eq('week_id', args.weekId)
       .eq('day', args.day)
       .eq('desk_id', args.deskId)
+      .eq('is_dog', false)
       .neq('member_id', args.memberId);
     if (evictErr) throw evictErr;
   }
@@ -200,12 +204,18 @@ export async function saveAnnouncement(
 }
 
 // Wipes all bookings for `weekId`, then clones the bookings from `sourceWeekId` into it.
+// Reads the raw rows (not the trimmed Booking shape) so booked_by survives the
+// copy — audit P1-1. is_dog is re-set by the DB trigger on insert.
 export async function copyBookingsBetweenWeeks(
   sourceWeekId: string,
   targetWeekId: string,
 ): Promise<number> {
-  const source = await fetchBookingsForWeek(sourceWeekId);
-  if (source.length === 0) return 0;
+  const { data: source, error: srcErr } = await supabase
+    .from('bookings')
+    .select('member_id, day, desk_id, status, booked_by')
+    .eq('week_id', sourceWeekId);
+  if (srcErr) throw srcErr;
+  if (!source || source.length === 0) return 0;
 
   const { error: delErr } = await supabase
     .from('bookings')
@@ -214,11 +224,12 @@ export async function copyBookingsBetweenWeeks(
   if (delErr) throw delErr;
 
   const rows: BookingInsert[] = source.map((b) => ({
-    member_id: b.memberId,
+    member_id: b.member_id,
     week_id: targetWeekId,
     day: b.day,
-    desk_id: b.deskId,
+    desk_id: b.desk_id,
     status: b.status,
+    booked_by: b.booked_by,
   }));
   const { error: insErr } = await supabase.from('bookings').insert(rows);
   if (insErr) throw insErr;

@@ -156,7 +156,15 @@ export default function App() {
   );
   // Only Diviyaj, Sarah, and Gabriella (is_admin) can book / edit / remove
   // bookings for OTHER people — and navigate beyond the rolling window.
-  const isCurrentUserAdmin = !!me?.isAdmin;
+  // `?viewas=member` lets an admin preview the regular-user experience
+  // (client-side simulation only — remove the param to get powers back).
+  const viewAsMember = useMemo(
+    () =>
+      typeof window !== 'undefined' &&
+      new URLSearchParams(window.location.search).get('viewas') === 'member',
+    [],
+  );
+  const isCurrentUserAdmin = !!me?.isAdmin && !viewAsMember;
 
   // Rolling 1-week navigation guards — past weeks are never reachable,
   // next week only when isNextWeekUnlocked (Fri+). ADMIN OVERRIDE: admins
@@ -270,11 +278,19 @@ export default function App() {
     return currentDayBookings.filter((b) => dogIds.includes(b.memberId) && b.status === 'booked').length;
   }, [currentDayBookings, teamMembers]);
 
-  // Handler for clicking a desk on the visual floor plan map
+  // Handler for clicking a desk on the visual floor plan map.
+  // Resolves to the HUMAN booking on that desk — a dog sharing the desk
+  // shouldn't hijack the click (manage dogs via the pup flow / admin panel).
   const handleDeskClick = (deskId: number) => {
-    const existingBooking = currentDayBookings.find((b) => b.deskId === deskId);
+    const dogIds = new Set(teamMembers.filter((m) => m.isDog).map((m) => m.id));
+    const existingBooking = currentDayBookings.find(
+      (b) => b.deskId === deskId && !dogIds.has(b.memberId),
+    );
 
     if (existingBooking) {
+      // Non-admins can't manage other people's bookings — the hover tooltip
+      // already says who's there, so don't open the modal at all.
+      if (!isCurrentUserAdmin && existingBooking.memberId !== activeMemberId) return;
       setModalMemberId(existingBooking.memberId);
       setModalDeskId(deskId);
     } else {
@@ -293,8 +309,10 @@ export default function App() {
     setIsModalOpen(true);
   };
 
-  // Handler for clicking a cell on the spreadsheet editor
+  // Handler for clicking a cell on the spreadsheet editor.
+  // Same rule as the map: non-admins only open their own row.
   const handleSpreadsheetCellClick = (memberId: string, day: DayOfWeek) => {
+    if (!isCurrentUserAdmin && memberId !== activeMemberId) return;
     setActiveDay(day);
     setModalMemberId(memberId);
     setModalDeskId(null);
@@ -322,6 +340,8 @@ export default function App() {
         deskId,
         status,
         bookedBy: activeMemberId,
+        // Dogs share desks — they never evict (and are never evicted by) humans.
+        isDog: !!teamMembers.find((m) => m.id === memberId)?.isDog,
       });
       // Force-refresh the local bookings cache so the user sees their change
       // immediately, even if the Supabase realtime channel hasn't propagated
@@ -371,6 +391,9 @@ export default function App() {
       const deskNo =
         desks.find((d) => d.id === myBookingToday.deskId)?.number ?? myBookingToday.deskId;
       if (!window.confirm(`Release desk ${deskNo} and sofa surf instead?`)) return;
+    } else if (myBookingToday?.status === 'wfh') {
+      // Don't silently flip a WFH day (audit P2-5)
+      if (!window.confirm('Switch from working from home to sofa surfing?')) return;
     }
     await handleSaveBooking(activeMemberId, activeDay, null, 'sofa_surf');
   };
@@ -477,8 +500,8 @@ export default function App() {
             <button
               onClick={() => setIsAdminPanelOpen(true)}
               className="p-2 text-slate-500 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-all duration-150 cursor-pointer active:scale-90"
-              title="Team settings (admin)"
-              aria-label="Team settings"
+              title="Admin settings"
+              aria-label="Admin settings"
             >
               <Settings className="w-4 h-4" />
             </button>
@@ -713,7 +736,7 @@ export default function App() {
                     className="w-full flex items-center gap-2 px-3 py-2 text-xs text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer border-t border-slate-100"
                   >
                     <Settings className="w-3.5 h-3.5 text-slate-500" />
-                    <span>Team settings</span>
+                    <span>Admin settings</span>
                   </button>
                 )}
                 <button
@@ -841,6 +864,7 @@ export default function App() {
               onDeskClick={handleDeskClick}
               onPupBedClick={handlePupBedClick}
               searchQuery={searchQuery}
+              isAdmin={isCurrentUserAdmin}
               headerExtra={
                 <AnnouncementBanner
                   isAdmin={isCurrentUserAdmin}
@@ -866,7 +890,8 @@ export default function App() {
                 activeWeek={activeWeek}
                 currentMondayStr={currentMondayStr}
                 nextMondayDateStr={nextMondayDateStr}
-                isNextWeekUnlocked={isNextWeekUnlocked}
+                // Admins bypass the Friday unlock here too (audit P1-3)
+                isNextWeekUnlocked={isNextWeekUnlocked || isCurrentUserAdmin}
                 onWeekChange={setActiveWeek}
               />
             </Suspense>
@@ -907,7 +932,8 @@ export default function App() {
         </Suspense>
       )}
 
-      {/* Admin settings panel — only ever mounted for admins */}
+      {/* Admin settings panel — only ever mounted for admins. Bookings tab
+          drives the same activeWeek as the map, so week shifts stay in sync. */}
       {isAdminPanelOpen && isCurrentUserAdmin && (
         <Suspense fallback={null}>
           <AdminPanel
@@ -916,6 +942,14 @@ export default function App() {
             onMembersChanged={() => {
               reloadMembers();
             }}
+            weekLabel={getWeekRangeLabel(activeWeek)}
+            initialDay={activeDay}
+            bookings={currentWeekBookings}
+            desks={desks}
+            liveMembers={teamMembers}
+            onShiftWeek={shiftWeek}
+            onSaveBooking={handleSaveBooking}
+            onDeleteBooking={handleDeleteBooking}
           />
         </Suspense>
       )}

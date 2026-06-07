@@ -120,9 +120,14 @@ export const BookingModal: React.FC<BookingModalProps> = ({
     (b) => b.day === day && b.memberId !== selectedMemberId && b.deskId !== null
   );
 
-  // Is a desk taken? Returns the occupant member
+  // Is a desk taken (by a HUMAN)? Dogs share desks with their owners, so a
+  // dog at a desk never blocks it. Returns the human occupant member.
   const getDeskOccupant = (id: number) => {
-    const booking = otherBookingsOnSelectedDay.find((b) => b.deskId === id);
+    const booking = otherBookingsOnSelectedDay.find((b) => {
+      if (b.deskId !== id) return false;
+      const m = teamMembers.find((tm) => tm.id === b.memberId);
+      return !m?.isDog;
+    });
     return booking ? teamMembers.find((m) => m.id === booking.memberId) : null;
   };
 
@@ -145,7 +150,9 @@ export const BookingModal: React.FC<BookingModalProps> = ({
 
   const handleSave = () => {
     if (!isFormValid()) return;
-    const finalDeskId = currentMember?.isDog ? null : selectedDeskId;
+    // Dogs may sit at a desk with their owner (deskId set) or default to the
+    // pup bed (null). Sofa-surf/WFH always clear the desk.
+    const finalDeskId = bookingStatus === 'booked' ? selectedDeskId : null;
     onSave(selectedMemberId, day, finalDeskId, bookingStatus);
     onClose();
   };
@@ -192,13 +199,41 @@ export const BookingModal: React.FC<BookingModalProps> = ({
       : 'Standard desk';
   const statusLabel = bookingStatus === 'booked'
     ? (currentMember?.isDog
-        ? 'Pup bed'
+        ? selectedDeskId
+          ? `Desk ${selectedDeskId} · with ${getDeskOccupant(selectedDeskId)?.name ?? 'the team'}`
+          : 'Pup bed'
         : selectedDeskId
           ? `Desk ${selectedDeskId} · ${deskTypeLabel}`
           : 'No desk picked yet')
     : bookingStatus === 'sofa_surf'
       ? 'Sofa surfing'
       : 'Working from home';
+
+  // Dog seat picker — pup bed (default) or any desk, labelled with the human
+  // sitting there so "next to their owner" is one glance.
+  const dogDeskSelect = (
+    <div>
+      <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+        Where will they sit?
+      </label>
+      <select
+        value={selectedDeskId ?? ''}
+        onChange={(e) => setSelectedDeskId(e.target.value ? Number(e.target.value) : null)}
+        className="w-full bg-white border border-slate-200 text-slate-800 rounded-xl px-3.5 py-3 text-sm outline-none focus:ring-2 focus:ring-amber-400 transition-all cursor-pointer font-medium"
+      >
+        <option value="">🛏 Pup bed</option>
+        {desks.map((d) => {
+          const occupant = getDeskOccupant(d.id);
+          return (
+            <option key={d.id} value={d.id}>
+              Desk {d.number}
+              {occupant ? ` — with ${occupant.name}` : ''}
+            </option>
+          );
+        })}
+      </select>
+    </div>
+  );
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/65 backdrop-blur-sm animate-fade-in">
@@ -256,23 +291,26 @@ export const BookingModal: React.FC<BookingModalProps> = ({
             </div>
           </div>
 
-          {/* Pup-booking mode: just a dog picker, nothing else */}
+          {/* Pup-booking mode: dog picker + seat picker (pup bed or owner's desk) */}
           {pupBookingMode && (
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1.5">
-                Which pup?
-              </label>
-              <select
-                value={selectedMemberId}
-                onChange={(e) => setSelectedMemberId(e.target.value)}
-                className="w-full bg-white border border-slate-200 text-slate-800 rounded-xl px-3.5 py-3 text-sm outline-none focus:ring-2 focus:ring-amber-400 transition-all cursor-pointer font-medium"
-              >
-                <option value="">-- Choose a pup --</option>
-                {dogsList.map((m) => (
-                  <option key={m.id} value={m.id}>🐶 {m.name}</option>
-                ))}
-              </select>
-            </div>
+            <>
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+                  Which pup?
+                </label>
+                <select
+                  value={selectedMemberId}
+                  onChange={(e) => setSelectedMemberId(e.target.value)}
+                  className="w-full bg-white border border-slate-200 text-slate-800 rounded-xl px-3.5 py-3 text-sm outline-none focus:ring-2 focus:ring-amber-400 transition-all cursor-pointer font-medium"
+                >
+                  <option value="">-- Choose a pup --</option>
+                  {dogsList.map((m) => (
+                    <option key={m.id} value={m.id}>🐶 {m.name}</option>
+                  ))}
+                </select>
+              </div>
+              {selectedMemberId && dogDeskSelect}
+            </>
           )}
 
           {/* Member picker — admins only (non-admins always book themselves). */}
@@ -362,14 +400,14 @@ export const BookingModal: React.FC<BookingModalProps> = ({
           {/* Desk assignment — only when more options is open AND not pup-booking */}
           {!pupBookingMode && showMoreOptions && bookingStatus === 'booked' && (
             currentMember?.isDog ? (
-              <div className="border border-slate-200 rounded-xl p-4 text-xs space-y-2 text-slate-600">
+              <div className="border border-slate-200 rounded-xl p-4 text-xs space-y-3 text-slate-600">
                 <div className="flex items-center gap-2">
                   <PawPrint className="w-4 h-4 text-slate-500" />
-                  <p className="font-semibold text-slate-900">Pup room</p>
+                  <p className="font-semibold text-slate-900">
+                    {currentMember.name} on {day}
+                  </p>
                 </div>
-                <p className="leading-relaxed">
-                  <strong className="text-slate-900">{currentMember.name}</strong> will be placed in the pup room on {day} — no desk needed.
-                </p>
+                {dogDeskSelect}
               </div>
             ) : (
               <div className="space-y-3">
