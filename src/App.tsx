@@ -495,7 +495,7 @@ export default function App() {
 
       {/* Stats + week navigator: desktop only */}
       <div className="hidden md:flex bg-white border-b border-slate-200 px-8 py-3 items-center justify-between shrink-0 z-10">
-        <div className="flex items-center gap-1 text-xs text-slate-600">
+        <div className="flex items-center gap-1 text-xs text-slate-600 shrink-0">
           <span className="text-slate-700 font-medium tabular-nums px-2 py-1">
             {selectedDateLabel}
           </span>
@@ -738,6 +738,13 @@ export default function App() {
             <PawPrint className="w-3 h-3 text-slate-400" />
             <span className="font-semibold text-slate-900 tabular-nums">{dogsInOfficeCount}</span>
           </span>
+          {/* Announcement banner pill — truncated; full text on tap-and-hold
+              (title) or by scrolling this row. */}
+          <AnnouncementBanner
+            isAdmin={isCurrentUserAdmin}
+            currentUserId={activeMemberId}
+            className="shrink-0 max-w-[55vw]"
+          />
           {/* Who's-in roster — dropdown uses fixed positioning so the
               overflow-x-auto here can't clip it. */}
           <span className="ml-auto shrink-0 pl-2">
@@ -752,11 +759,6 @@ export default function App() {
         </div>
 
       </div>
-
-      {/* Announcement banner — admin-editable, defaults to the attendance
-          reminder when no custom message is set. Single instance serves both
-          desktop and mobile (sits directly under whichever header is shown). */}
-      <AnnouncementBanner isAdmin={isCurrentUserAdmin} currentUserId={activeMemberId} />
 
       {/* Workspace: full-width main viewport (no padding on mobile so floor plan can fill) */}
       <div className="flex-1 w-full overflow-hidden p-0 md:p-3 bg-slate-100/30">
@@ -775,6 +777,13 @@ export default function App() {
               onDeskClick={handleDeskClick}
               onPupBedClick={handlePupBedClick}
               searchQuery={searchQuery}
+              headerExtra={
+                <AnnouncementBanner
+                  isAdmin={isCurrentUserAdmin}
+                  currentUserId={activeMemberId}
+                  className="max-w-md"
+                />
+              }
             />
           ) : (
             <Suspense
