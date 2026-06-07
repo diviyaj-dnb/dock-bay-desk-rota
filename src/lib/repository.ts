@@ -68,6 +68,48 @@ export async function fetchTeamMembers(): Promise<TeamMember[]> {
   return (data as DbTeamMember[]).map(toTeamMember);
 }
 
+// Admin panel: every member including archived ones, with the archived
+// flag mapped so the panel can offer restore.
+export async function fetchAllTeamMembers(): Promise<TeamMember[]> {
+  const { data, error } = await supabase
+    .from('team_members')
+    .select('*')
+    .order('name');
+  if (error) throw error;
+  return (data as DbTeamMember[]).map((r) => ({
+    ...toTeamMember(r),
+    archived: r.archived,
+  }));
+}
+
+// Admin panel: add a team member (or office pup). Email-matched to the
+// Google login by the handle_new_user trigger when the person first signs in.
+export async function addTeamMember(args: {
+  name: string;
+  email: string | null;
+  isDesigner: boolean;
+  isDog: boolean;
+}): Promise<void> {
+  const { error } = await supabase.from('team_members').insert({
+    id: crypto.randomUUID(),
+    name: args.name,
+    email: args.email,
+    is_designer: args.isDesigner,
+    is_dog: args.isDog,
+  });
+  if (error) throw error;
+}
+
+// Admin panel: archive (soft-remove) or restore a member. Never deletes —
+// booking history stays intact.
+export async function setMemberArchived(id: string, archived: boolean): Promise<void> {
+  const { error } = await supabase
+    .from('team_members')
+    .update({ archived })
+    .eq('id', id);
+  if (error) throw error;
+}
+
 export async function fetchDesks(): Promise<Desk[]> {
   const { data, error } = await supabase.from('desks').select('*').order('id');
   if (error) throw error;

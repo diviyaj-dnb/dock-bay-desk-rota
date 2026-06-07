@@ -14,6 +14,9 @@ const BookingModal = lazy(() =>
 const RulesModal = lazy(() =>
   import('./components/RulesModal').then((m) => ({ default: m.RulesModal })),
 );
+const AdminPanel = lazy(() =>
+  import('./components/AdminPanel').then((m) => ({ default: m.AdminPanel })),
+);
 import {
   HelpCircle,
   ChevronLeft,
@@ -26,6 +29,7 @@ import {
   PawPrint,
   Loader2,
   LogOut,
+  Settings,
 } from 'lucide-react';
 import logoUrl from './assets/dock-and-bay-logo.jpg';
 import { useBookingsForWeek, useDesks, useTeamMembers, useSession } from './lib/hooks';
@@ -128,18 +132,61 @@ export default function App() {
     });
   }, [activeWeek, activeDay]);
 
+  // Supabase-backed data (loads on auth) — declared before the navigation
+  // guards because the admin override below needs the signed-in member.
+  const { members: teamMembers, loading: membersLoading, reload: reloadMembers } = useTeamMembers(true);
+  const { desks, loading: desksLoading } = useDesks(true);
+  const { bookings: currentWeekBookings, loading: bookingsLoading, reload: reloadBookings } = useBookingsForWeek(activeWeek, true);
+
+  // Identity now comes from the Google login (AuthGate guarantees a session
+  // here). We match the signed-in email to a team_members row — the
+  // handle_new_user DB trigger ensures every @dockandbay.com login has a row
+  // (linked by name or freshly created), so this resolves once members load.
+  const { session } = useSession();
+  const authedEmail = (session?.user?.email ?? '').toLowerCase();
+  const activeMemberId = useMemo(() => {
+    if (!authedEmail) return null;
+    return teamMembers.find((m) => (m.email ?? '').toLowerCase() === authedEmail)?.id ?? null;
+  }, [teamMembers, authedEmail]);
+
+  // "Me" is the signed-in team member (matched by login email above).
+  const me = useMemo(
+    () => teamMembers.find((m) => m.id === activeMemberId) ?? null,
+    [teamMembers, activeMemberId],
+  );
+  // Only Diviyaj, Sarah, and Gabriella (is_admin) can book / edit / remove
+  // bookings for OTHER people — and navigate beyond the rolling window.
+  const isCurrentUserAdmin = !!me?.isAdmin;
+
   // Rolling 1-week navigation guards — past weeks are never reachable,
-  // next week only when isNextWeekUnlocked (Thu+).
-  const canGoPrev = activeWeek !== currentMondayStr;
-  const canGoNext = isNextWeekUnlocked && activeWeek === currentMondayStr;
+  // next week only when isNextWeekUnlocked (Fri+). ADMIN OVERRIDE: admins
+  // step freely in both directions (book visits weeks ahead, review past
+  // weeks); everyone else keeps the equal-chance Friday-unlock rule.
+  const canGoPrev = isCurrentUserAdmin || activeWeek !== currentMondayStr;
+  const canGoNext = isCurrentUserAdmin || (isNextWeekUnlocked && activeWeek === currentMondayStr);
+
+  const shiftWeek = (days: number) => {
+    const [y, m, d] = activeWeek.split('-').map(Number);
+    const date = new Date(y, m - 1, d);
+    date.setDate(date.getDate() + days);
+    setActiveWeek(getMondayDateString(date));
+  };
 
   const handlePrevWeek = () => {
     if (!canGoPrev) return;
+    if (isCurrentUserAdmin) {
+      shiftWeek(-7);
+      return;
+    }
     setActiveWeek(currentMondayStr);
   };
 
   const handleNextWeek = () => {
     if (!canGoNext) return;
+    if (isCurrentUserAdmin) {
+      shiftWeek(7);
+      return;
+    }
     setActiveWeek(nextMondayDateStr);
   };
 
@@ -148,14 +195,9 @@ export default function App() {
   };
 
   const handleToNextWeek = () => {
-    if (!isNextWeekUnlocked) return;
+    if (!isNextWeekUnlocked && !isCurrentUserAdmin) return;
     setActiveWeek(nextMondayDateStr);
   };
-
-  // Supabase-backed data (loads on auth)
-  const { members: teamMembers, loading: membersLoading } = useTeamMembers(true);
-  const { desks, loading: desksLoading } = useDesks(true);
-  const { bookings: currentWeekBookings, loading: bookingsLoading, reload: reloadBookings } = useBookingsForWeek(activeWeek, true);
 
   const isLoadingData = membersLoading || desksLoading;
 
@@ -172,20 +214,10 @@ export default function App() {
     }
   };
 
-  // Identity now comes from the Google login (AuthGate guarantees a session
-  // here). We match the signed-in email to a team_members row — the
-  // handle_new_user DB trigger ensures every @dockandbay.com login has a row
-  // (linked by name or freshly created), so this resolves once members load.
-  const { session } = useSession();
-  const authedEmail = (session?.user?.email ?? '').toLowerCase();
-  const activeMemberId = useMemo(() => {
-    if (!authedEmail) return null;
-    return teamMembers.find((m) => (m.email ?? '').toLowerCase() === authedEmail)?.id ?? null;
-  }, [teamMembers, authedEmail]);
-
   // Modal Control State
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [isRulesOpen, setIsRulesOpen] = useState<boolean>(false);
+  const [isAdminPanelOpen, setIsAdminPanelOpen] = useState<boolean>(false);
   const [modalMemberId, setModalMemberId] = useState<string | null>(null);
   const [modalDeskId, setModalDeskId] = useState<number | null>(null);
   // When true, the modal is opened from the pup-bed hotspot — picker is filtered
@@ -210,14 +242,6 @@ export default function App() {
     return () => document.removeEventListener('mousedown', handler);
   }, [accountOpen]);
 
-  // "Me" is the signed-in team member (matched by login email above).
-  const me = useMemo(
-    () => teamMembers.find((m) => m.id === activeMemberId) ?? null,
-    [teamMembers, activeMemberId],
-  );
-  // Only Diviyaj, Sarah, and Gabriella (is_admin) can book / edit / remove
-  // bookings for OTHER people. Everyone else is limited to their own.
-  const isCurrentUserAdmin = !!me?.isAdmin;
   const myInitials = useMemo(() => {
     if (!me) return '?';
     return me.name
@@ -448,6 +472,18 @@ export default function App() {
             <HelpCircle className="w-4 h-4" />
           </button>
 
+          {/* Admin settings — Diviyaj, Sarah, Gabriella only */}
+          {isCurrentUserAdmin && (
+            <button
+              onClick={() => setIsAdminPanelOpen(true)}
+              className="p-2 text-slate-500 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-all duration-150 cursor-pointer active:scale-90"
+              title="Team settings (admin)"
+              aria-label="Team settings"
+            >
+              <Settings className="w-4 h-4" />
+            </button>
+          )}
+
           {/* Account avatar */}
           <div className="relative" ref={accountDropdownRef}>
             <button
@@ -545,7 +581,13 @@ export default function App() {
               onClick={handlePrevWeek}
               disabled={!canGoPrev}
               className="p-1.5 hover:bg-slate-100 rounded-md text-slate-500 hover:text-slate-900 transition-all duration-150 active:scale-90 disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-slate-500 enabled:cursor-pointer"
-              title={canGoPrev ? 'Back to this week' : 'Past weeks are locked'}
+              title={
+                isCurrentUserAdmin
+                  ? 'Previous week (admin)'
+                  : canGoPrev
+                    ? 'Back to this week'
+                    : 'Past weeks are locked'
+              }
               aria-label="Previous week"
             >
               <ChevronLeft className="w-4 h-4" />
@@ -557,7 +599,13 @@ export default function App() {
               onClick={handleNextWeek}
               disabled={!canGoNext}
               className="p-1.5 hover:bg-slate-100 rounded-md text-slate-500 hover:text-slate-900 transition-all duration-150 active:scale-90 disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-slate-500 enabled:cursor-pointer"
-              title={canGoNext ? 'Next week' : 'Next week unlocks Friday'}
+              title={
+                isCurrentUserAdmin
+                  ? 'Next week (admin)'
+                  : canGoNext
+                    ? 'Next week'
+                    : 'Next week unlocks Friday'
+              }
               aria-label="Next week"
             >
               <ChevronRight className="w-4 h-4" />
@@ -577,8 +625,12 @@ export default function App() {
             </button>
             <button
               onClick={handleToNextWeek}
-              disabled={!isNextWeekUnlocked}
-              title={isNextWeekUnlocked ? 'Jump to next week' : 'Next week unlocks Friday'}
+              disabled={!isNextWeekUnlocked && !isCurrentUserAdmin}
+              title={
+                isNextWeekUnlocked || isCurrentUserAdmin
+                  ? 'Jump to next week'
+                  : 'Next week unlocks Friday'
+              }
               className={`px-2.5 py-1 rounded-md font-medium transition-all duration-150 active:scale-[0.97] disabled:opacity-40 disabled:cursor-not-allowed enabled:cursor-pointer ${
                 activeWeek === nextMondayDateStr
                   ? 'text-white bg-[#f3705a] shadow-sm'
@@ -652,6 +704,18 @@ export default function App() {
                   <HelpCircle className="w-3.5 h-3.5 text-slate-500" />
                   <span>Booking guidelines</span>
                 </button>
+                {isCurrentUserAdmin && (
+                  <button
+                    onClick={() => {
+                      setAccountOpen(false);
+                      setIsAdminPanelOpen(true);
+                    }}
+                    className="w-full flex items-center gap-2 px-3 py-2 text-xs text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer border-t border-slate-100"
+                  >
+                    <Settings className="w-3.5 h-3.5 text-slate-500" />
+                    <span>Team settings</span>
+                  </button>
+                )}
                 <button
                   onClick={() => {
                     setAccountOpen(false);
@@ -840,6 +904,19 @@ export default function App() {
       {isRulesOpen && (
         <Suspense fallback={null}>
           <RulesModal isOpen={isRulesOpen} onClose={() => setIsRulesOpen(false)} />
+        </Suspense>
+      )}
+
+      {/* Admin settings panel — only ever mounted for admins */}
+      {isAdminPanelOpen && isCurrentUserAdmin && (
+        <Suspense fallback={null}>
+          <AdminPanel
+            isOpen={isAdminPanelOpen}
+            onClose={() => setIsAdminPanelOpen(false)}
+            onMembersChanged={() => {
+              reloadMembers();
+            }}
+          />
         </Suspense>
       )}
     </div>
