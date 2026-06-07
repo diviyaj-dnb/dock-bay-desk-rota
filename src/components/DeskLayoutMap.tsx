@@ -22,6 +22,9 @@ interface DeskLayoutMapProps {
   onDeskClick: (deskId: number) => void;
   onPupBedClick: () => void;
   searchQuery: string;
+  // Admins can edit anyone's booking; members only their own — drives the
+  // tooltip wording and pointer cursor on taken desks.
+  isAdmin?: boolean;
   // Slot rendered on the right of the card header (desktop only) — used for
   // the announcement banner pill so it sits in the floor plan's white space.
   headerExtra?: React.ReactNode;
@@ -123,6 +126,7 @@ export const DeskLayoutMap: React.FC<DeskLayoutMapProps> = ({
   onDeskClick,
   onPupBedClick,
   searchQuery,
+  isAdmin = false,
   headerExtra,
 }) => {
   const [hoveredDesk, setHoveredDesk] = useState<number | null>(null);
@@ -337,6 +341,9 @@ export const DeskLayoutMap: React.FC<DeskLayoutMapProps> = ({
     const booking = bookingsByDesk[desk.id];
     const member = booking ? getMemberById(booking.memberId) : null;
     const deskDogs = dogsByDesk[desk.id] ?? [];
+    // Members can only manage their own booking — on someone else's taken
+    // desk the click is a no-op, so don't advertise editing.
+    const canManage = !booking || isAdmin || booking.memberId === activeMemberId;
     const isHovered = hoveredDesk === desk.id;
     const isSearched = doesDeskMatchSearch(desk.id);
     const isActiveUserHere = !!activeMemberId && !!booking && booking.memberId === activeMemberId;
@@ -359,7 +366,9 @@ export const DeskLayoutMap: React.FC<DeskLayoutMapProps> = ({
           }
           onDeskClick(desk.id);
         }}
-        className={`absolute group ${isEditing ? 'cursor-move' : 'cursor-pointer'}`}
+        className={`absolute group ${
+          isEditing ? 'cursor-move' : canManage ? 'cursor-pointer' : 'cursor-default'
+        }`}
         style={{
           left: `${pos.x - pos.w / 2}%`,
           top: `${pos.y - pos.h / 2}%`,
@@ -476,7 +485,7 @@ export const DeskLayoutMap: React.FC<DeskLayoutMapProps> = ({
                   )}
                 </p>
                 <p className="text-[9px] text-slate-400 leading-tight mt-0.5">
-                  Desk {desk.number} · click to edit
+                  Desk {desk.number} · {canManage ? 'click to edit' : 'taken'}
                 </p>
               </>
             ) : (

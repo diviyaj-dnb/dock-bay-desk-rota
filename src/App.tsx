@@ -156,7 +156,15 @@ export default function App() {
   );
   // Only Diviyaj, Sarah, and Gabriella (is_admin) can book / edit / remove
   // bookings for OTHER people — and navigate beyond the rolling window.
-  const isCurrentUserAdmin = !!me?.isAdmin;
+  // `?viewas=member` lets an admin preview the regular-user experience
+  // (client-side simulation only — remove the param to get powers back).
+  const viewAsMember = useMemo(
+    () =>
+      typeof window !== 'undefined' &&
+      new URLSearchParams(window.location.search).get('viewas') === 'member',
+    [],
+  );
+  const isCurrentUserAdmin = !!me?.isAdmin && !viewAsMember;
 
   // Rolling 1-week navigation guards — past weeks are never reachable,
   // next week only when isNextWeekUnlocked (Fri+). ADMIN OVERRIDE: admins
@@ -280,6 +288,9 @@ export default function App() {
     );
 
     if (existingBooking) {
+      // Non-admins can't manage other people's bookings — the hover tooltip
+      // already says who's there, so don't open the modal at all.
+      if (!isCurrentUserAdmin && existingBooking.memberId !== activeMemberId) return;
       setModalMemberId(existingBooking.memberId);
       setModalDeskId(deskId);
     } else {
@@ -298,8 +309,10 @@ export default function App() {
     setIsModalOpen(true);
   };
 
-  // Handler for clicking a cell on the spreadsheet editor
+  // Handler for clicking a cell on the spreadsheet editor.
+  // Same rule as the map: non-admins only open their own row.
   const handleSpreadsheetCellClick = (memberId: string, day: DayOfWeek) => {
+    if (!isCurrentUserAdmin && memberId !== activeMemberId) return;
     setActiveDay(day);
     setModalMemberId(memberId);
     setModalDeskId(null);
@@ -378,6 +391,9 @@ export default function App() {
       const deskNo =
         desks.find((d) => d.id === myBookingToday.deskId)?.number ?? myBookingToday.deskId;
       if (!window.confirm(`Release desk ${deskNo} and sofa surf instead?`)) return;
+    } else if (myBookingToday?.status === 'wfh') {
+      // Don't silently flip a WFH day (audit P2-5)
+      if (!window.confirm('Switch from working from home to sofa surfing?')) return;
     }
     await handleSaveBooking(activeMemberId, activeDay, null, 'sofa_surf');
   };
@@ -848,6 +864,7 @@ export default function App() {
               onDeskClick={handleDeskClick}
               onPupBedClick={handlePupBedClick}
               searchQuery={searchQuery}
+              isAdmin={isCurrentUserAdmin}
               headerExtra={
                 <AnnouncementBanner
                   isAdmin={isCurrentUserAdmin}
@@ -873,7 +890,8 @@ export default function App() {
                 activeWeek={activeWeek}
                 currentMondayStr={currentMondayStr}
                 nextMondayDateStr={nextMondayDateStr}
-                isNextWeekUnlocked={isNextWeekUnlocked}
+                // Admins bypass the Friday unlock here too (audit P1-3)
+                isNextWeekUnlocked={isNextWeekUnlocked || isCurrentUserAdmin}
                 onWeekChange={setActiveWeek}
               />
             </Suspense>

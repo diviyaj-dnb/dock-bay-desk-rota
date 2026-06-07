@@ -182,7 +182,9 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
         ? b.deskId !== null
           ? `desk-${b.deskId}`
           : 'pup'
-        : `desk-${b.deskId}`
+        : b.deskId !== null
+          ? `desk-${b.deskId}`
+          : '' // defensive: human 'booked' with no desk falls to the placeholder (audit P1-2)
       : b.status;
 
   // Select listing every assignment option; taken desks disabled (except the
@@ -424,6 +426,9 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
               </div>
               <div className="flex justify-center gap-1">
                 {DAYS.map((d) => {
+                  // Intentionally counts ALL rows for the day (desks + sofa +
+                  // wfh + pups) — it's "how many rows you'll manage below",
+                  // broader than the map header's desk-only count.
                   const count = bookings.filter((b) => b.day === d).length;
                   return (
                     <button

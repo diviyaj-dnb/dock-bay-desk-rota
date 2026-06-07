@@ -204,12 +204,18 @@ export async function saveAnnouncement(
 }
 
 // Wipes all bookings for `weekId`, then clones the bookings from `sourceWeekId` into it.
+// Reads the raw rows (not the trimmed Booking shape) so booked_by survives the
+// copy — audit P1-1. is_dog is re-set by the DB trigger on insert.
 export async function copyBookingsBetweenWeeks(
   sourceWeekId: string,
   targetWeekId: string,
 ): Promise<number> {
-  const source = await fetchBookingsForWeek(sourceWeekId);
-  if (source.length === 0) return 0;
+  const { data: source, error: srcErr } = await supabase
+    .from('bookings')
+    .select('member_id, day, desk_id, status, booked_by')
+    .eq('week_id', sourceWeekId);
+  if (srcErr) throw srcErr;
+  if (!source || source.length === 0) return 0;
 
   const { error: delErr } = await supabase
     .from('bookings')
@@ -218,11 +224,12 @@ export async function copyBookingsBetweenWeeks(
   if (delErr) throw delErr;
 
   const rows: BookingInsert[] = source.map((b) => ({
-    member_id: b.memberId,
+    member_id: b.member_id,
     week_id: targetWeekId,
     day: b.day,
-    desk_id: b.deskId,
+    desk_id: b.desk_id,
     status: b.status,
+    booked_by: b.booked_by,
   }));
   const { error: insErr } = await supabase.from('bookings').insert(rows);
   if (insErr) throw insErr;
