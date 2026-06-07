@@ -22,6 +22,9 @@ interface DeskLayoutMapProps {
   onDeskClick: (deskId: number) => void;
   onPupBedClick: () => void;
   searchQuery: string;
+  // Slot rendered on the right of the card header (desktop only) — used for
+  // the announcement banner pill so it sits in the floor plan's white space.
+  headerExtra?: React.ReactNode;
 }
 
 // Position of each desk as percentage of the image. (x, y) is centre, (w, h) is size.
@@ -120,6 +123,7 @@ export const DeskLayoutMap: React.FC<DeskLayoutMapProps> = ({
   onDeskClick,
   onPupBedClick,
   searchQuery,
+  headerExtra,
 }) => {
   const [hoveredDesk, setHoveredDesk] = useState<number | null>(null);
   const containerRef = React.useRef<HTMLDivElement>(null);
@@ -456,7 +460,8 @@ export const DeskLayoutMap: React.FC<DeskLayoutMapProps> = ({
     <div className="bg-transparent md:bg-white md:rounded-2xl md:border md:border-slate-200 md:shadow-sm p-0 md:p-5 h-full flex flex-col overflow-hidden">
       {/* Header strip with title — desktop only (mobile maximises vertical space) */}
       <div className="hidden md:flex flex-col lg:flex-row lg:items-center justify-between gap-3 mb-4 shrink-0">
-        <div>
+        {/* Equal flex flanks keep the banner pill truly centred in the card */}
+        <div className="flex-1 min-w-0">
           <h2 className="text-sm font-semibold text-slate-900 tracking-tight">
             Office floor plan
           </h2>
@@ -464,6 +469,12 @@ export const DeskLayoutMap: React.FC<DeskLayoutMapProps> = ({
             Click any desk to manage the booking.
           </p>
         </div>
+        {headerExtra && (
+          <>
+            <div className="flex justify-center min-w-0 px-2">{headerExtra}</div>
+            <div className="flex-1 hidden lg:block" />
+          </>
+        )}
       </div>
 
       {/* Floor plan image with hotspot overlays */}
