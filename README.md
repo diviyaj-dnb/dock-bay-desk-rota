@@ -4,7 +4,7 @@ Interactive desk-booking rota for Dock & Bay HQ. Team members sign in with their
 Dock & Bay Google account, see the office floor plan, and book a desk (or the
 sofa, or the pup bed) for the week.
 
-**Live:** https://dock-bay-desk-rota.vercel.app
+**Live:** https://deskrota.dockandbay.com (custom domain · Cloudflare CNAME → Vercel; the `*.vercel.app` URL still works)
 
 ## Stack
 
