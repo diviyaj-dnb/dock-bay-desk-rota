@@ -191,7 +191,9 @@ export const BookingModal: React.FC<BookingModalProps> = ({
   // For a fresh booking with no member chosen yet, non-admins implicitly book
   // for themselves, so it's allowed.
   const targetIsSelfOrEmpty = !selectedMemberId || selectedMemberId === currentUserId;
-  const canManage = isAdmin || targetIsSelfOrEmpty;
+  // Dogs have no login, so anyone may book/manage a pup (they share a desk and
+  // never evict a human). Admins + your own bookings are manageable as before.
+  const canManage = isAdmin || targetIsSelfOrEmpty || !!currentMember?.isDog;
   const deskTypeLabel = targetDesk?.type === 'design'
     ? 'Design area'
     : targetDesk?.type === 'no-screen'
