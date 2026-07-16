@@ -361,8 +361,10 @@ export default function App() {
     deskId: number | null,
     status: 'booked' | 'sofa_surf' | 'wfh',
   ) => {
-    // Permission guard: only admins may book/edit on behalf of others.
-    if (!isCurrentUserAdmin && memberId !== activeMemberId) {
+    // Permission guard: only admins may book/edit on behalf of others — except
+    // dogs, which anyone can book (they have no login and just share a desk).
+    const targetIsDog = !!teamMembers.find((m) => m.id === memberId)?.isDog;
+    if (!isCurrentUserAdmin && memberId !== activeMemberId && !targetIsDog) {
       alert('You can only manage your own bookings.');
       return;
     }
@@ -388,7 +390,8 @@ export default function App() {
 
   // Delete booking
   const handleDeleteBooking = async (memberId: string, day: DayOfWeek) => {
-    if (!isCurrentUserAdmin && memberId !== activeMemberId) {
+    const targetIsDog = !!teamMembers.find((m) => m.id === memberId)?.isDog;
+    if (!isCurrentUserAdmin && memberId !== activeMemberId && !targetIsDog) {
       alert('You can only manage your own bookings.');
       return;
     }
