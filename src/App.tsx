@@ -340,6 +340,19 @@ export default function App() {
     setIsModalOpen(true);
   };
 
+  // Turn a raw Postgres/RLS error into something a person can act on. The DB
+  // now enforces ownership + the week-lock, so these are expected outcomes, not
+  // crashes — say so plainly.
+  const friendlyBookingError = (e: unknown): string => {
+    const msg = (e as Error)?.message ?? '';
+    if (/not open yet/i.test(msg)) return msg; // week-lock message is already human
+    if (/row-level security|permission denied|violates row-level/i.test(msg))
+      return 'You can only manage your own bookings.';
+    if (/duplicate key|unique|uniq_desk/i.test(msg))
+      return 'That desk was just taken by someone else — please pick another.';
+    return msg || 'Something went wrong. Please try again.';
+  };
+
   // Save booking. `bookedBy` records who performed the save (the signed-in
   // user), separate from `memberId` (who the booking is for).
   const handleSaveBooking = async (
@@ -369,7 +382,7 @@ export default function App() {
       // yet (or isn't enabled on the bookings table).
       await reloadBookings();
     } catch (e) {
-      alert('Could not save booking: ' + (e as Error).message);
+      alert(friendlyBookingError(e));
     }
   };
 
@@ -383,7 +396,7 @@ export default function App() {
       await deleteBooking(memberId, activeWeek, day);
       await reloadBookings();
     } catch (e) {
-      alert('Could not delete booking: ' + (e as Error).message);
+      alert(friendlyBookingError(e));
     }
   };
 
