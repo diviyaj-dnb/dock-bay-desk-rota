@@ -21,6 +21,7 @@ type DbDesk = {
   table_name: 'left' | 'middle' | 'right';
   row: number;
   col: 'left' | 'right';
+  archived: boolean;
 };
 
 type DbBooking = {
@@ -111,7 +112,13 @@ export async function setMemberArchived(id: string, archived: boolean): Promise<
 }
 
 export async function fetchDesks(): Promise<Desk[]> {
-  const { data, error } = await supabase.from('desks').select('*').order('id');
+  // Old-office desks (ids 1-30) are archived, not deleted — bookings still FK
+  // to them so history resolves. Only the live 26 (ids 101-126) are bookable.
+  const { data, error } = await supabase
+    .from('desks')
+    .select('*')
+    .eq('archived', false)
+    .order('id');
   if (error) throw error;
   return (data as DbDesk[]).map(toDesk);
 }
