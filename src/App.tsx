@@ -321,15 +321,6 @@ export default function App() {
     setIsModalOpen(true);
   };
 
-  // Handler for clicking the pup-bed hotspot — opens modal in dog-only booking mode
-  const handlePupBedClick = () => {
-    const activeMemberIsDog = teamMembers.find((m) => m.id === activeMemberId)?.isDog;
-    setModalMemberId(activeMemberIsDog ? activeMemberId : null);
-    setModalDeskId(null);
-    setIsPupBookingMode(true);
-    setIsModalOpen(true);
-  };
-
   // Handler for clicking a cell on the spreadsheet editor.
   // Same rule as the map: non-admins only open their own row.
   const handleSpreadsheetCellClick = (memberId: string, day: DayOfWeek) => {
@@ -899,7 +890,6 @@ export default function App() {
               teamMembers={teamMembers}
               activeMemberId={activeMemberId}
               onDeskClick={handleDeskClick}
-              onPupBedClick={handlePupBedClick}
               searchQuery={searchQuery}
               isAdmin={isCurrentUserAdmin}
               headerExtra={

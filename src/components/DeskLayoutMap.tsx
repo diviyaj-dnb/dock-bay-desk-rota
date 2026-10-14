@@ -6,11 +6,12 @@ import floorPlanPortrait from '../assets/floor-plan-mobile.webp';
 import { useIsMobile } from '../lib/hooks';
 
 type HotspotPos = { x: number; y: number; w: number; h: number };
-// Landscape v5: Diviyaj's final calibration pass on the 2026-06-07 image
-// (pup bed + desks 14–17 refined). Bump the key on EVERY committed
-// recalibration — all browsers persist positions, so without the bump
-// they'd shadow the new defaults. Portrait stays v2 (image unchanged).
-const STORAGE_KEY_LANDSCAPE = 'desk_hotspot_positions_landscape_v6_newoffice';
+// Landscape v8: detected against the "final" render (2750x1536), which adds
+// the green bucket seats beside the white table. Those are NOT desks.
+// Bump the key on EVERY committed recalibration: every browser persists
+// positions, so without the bump they would shadow the new defaults.
+// Portrait stays v2 (image unchanged, and PORTRAIT_READY is still false).
+const STORAGE_KEY_LANDSCAPE = 'desk_hotspot_positions_landscape_v8_final';
 const STORAGE_KEY_PORTRAIT = 'desk_hotspot_positions_portrait_v2';
 
 // Portrait render of the NEW office not supplied yet — see the usePortrait
@@ -24,7 +25,6 @@ interface DeskLayoutMapProps {
   teamMembers: TeamMember[];
   activeMemberId: string | null;
   onDeskClick: (deskId: number) => void;
-  onPupBedClick: () => void;
   searchQuery: string;
   // Admins can edit anyone's booking; members only their own — drives the
   // tooltip wording and pointer cursor on taken desks.
@@ -46,43 +46,43 @@ interface DeskLayoutMapProps {
 // 512 bookings still FK to desks(id). See supabase/09_new_office_desks.sql.
 const LANDSCAPE_HOTSPOTS: Record<number, HotspotPos> = {
   // TABLE A - 8 desks
-  101: { x: 18.32, y: 31.02, w: 5.59, h: 10.70 },
-  102: { x: 18.22, y: 42.68, w: 5.62, h: 10.80 },
-  103: { x: 18.12, y: 54.35, w: 5.59, h: 10.70 },
-  104: { x: 18.03, y: 66.10, w: 5.62, h: 11.16 },
-  105: { x: 25.66, y: 66.10, w: 5.66, h: 11.16 },
-  106: { x: 25.76, y: 54.35, w: 5.62, h: 10.70 },
-  107: { x: 25.82, y: 42.73, w: 5.59, h: 10.70 },
-  108: { x: 25.88, y: 31.15, w: 5.55, h: 10.80 },
+  101: { x: 29.76, y: 24.48, w: 3.05, h: 6.45 },
+  102: { x: 29.76, y: 31.74, w: 3.05, h: 6.51 },
+  103: { x: 29.71, y: 39.03, w: 3.02, h: 6.51 },
+  104: { x: 29.69, y: 46.22, w: 3.05, h: 6.32 },
+  105: { x: 33.58, y: 46.19, w: 3.05, h: 6.38 },
+  106: { x: 33.62, y: 39.06, w: 3.05, h: 6.45 },
+  107: { x: 33.62, y: 31.74, w: 3.05, h: 6.51 },
+  108: { x: 33.64, y: 24.48, w: 3.02, h: 6.45 },
 
   // TABLE B - 8 desks
-  109: { x: 46.68, y: 27.08, w: 5.59, h: 11.44 },
-  110: { x: 46.66, y: 39.16, w: 5.62, h: 10.89 },
-  111: { x: 46.66, y: 51.28, w: 5.62, h: 11.53 },
-  112: { x: 46.64, y: 63.68, w: 5.66, h: 11.62 },
-  113: { x: 54.41, y: 63.68, w: 5.74, h: 11.62 },
-  114: { x: 54.39, y: 51.33, w: 5.70, h: 11.44 },
-  115: { x: 54.36, y: 39.20, w: 5.70, h: 10.98 },
-  116: { x: 54.37, y: 27.13, w: 5.74, h: 11.34 },
+  109: { x: 44.36, y: 24.54, w: 3.02, h: 6.45 },
+  110: { x: 44.36, y: 31.80, w: 3.02, h: 6.51 },
+  111: { x: 44.36, y: 39.10, w: 3.02, h: 6.51 },
+  112: { x: 44.36, y: 46.22, w: 3.02, h: 6.32 },
+  113: { x: 48.20, y: 46.22, w: 2.98, h: 6.32 },
+  114: { x: 48.20, y: 39.10, w: 2.98, h: 6.51 },
+  115: { x: 48.18, y: 31.84, w: 3.02, h: 6.45 },
+  116: { x: 48.18, y: 24.58, w: 3.02, h: 6.38 },
 
   // TABLE C - 10 desks
-  117: { x: 77.30, y: 30.74, w: 5.66, h: 10.70 },
-  118: { x: 77.34, y: 42.41, w: 5.66, h: 10.98 },
-  119: { x: 77.42, y: 54.30, w: 5.74, h: 10.98 },
-  120: { x: 77.46, y: 66.19, w: 5.74, h: 11.16 },
-  121: { x: 77.56, y: 78.50, w: 5.78, h: 11.80 },
-  122: { x: 85.45, y: 78.68, w: 5.86, h: 11.80 },
-  123: { x: 85.33, y: 66.33, w: 5.86, h: 11.07 },
-  124: { x: 85.21, y: 54.39, w: 5.78, h: 10.98 },
-  125: { x: 85.10, y: 42.54, w: 5.70, h: 10.89 },
-  126: { x: 84.98, y: 30.88, w: 5.70, h: 10.61 },
+  117: { x: 58.64, y: 24.61, w: 2.91, h: 6.45 },
+  118: { x: 58.69, y: 31.84, w: 2.95, h: 6.45 },
+  119: { x: 58.69, y: 39.13, w: 2.95, h: 6.45 },
+  120: { x: 58.73, y: 46.35, w: 2.95, h: 6.45 },
+  121: { x: 58.76, y: 53.58, w: 2.95, h: 6.45 },
+  122: { x: 62.51, y: 53.58, w: 3.02, h: 6.32 },
+  123: { x: 62.44, y: 46.35, w: 3.02, h: 6.45 },
+  124: { x: 62.44, y: 39.13, w: 3.02, h: 6.45 },
+  125: { x: 62.38, y: 31.87, w: 2.98, h: 6.51 },
+  126: { x: 62.35, y: 24.64, w: 2.98, h: 6.38 },
 };
 
-// Pup-bed clickable hotspot — same HotspotPos shape as desks so it can be
-// calibrated with the in-app Hot tool (sentinel id 0 in livePositions below).
-// Click opens the booking modal in "pup-booking" mode (dogs only, no desk).
-const PUP_BED_LANDSCAPE: HotspotPos = { x: 49.60, y: 87.00, w: 8.20, h: 11.50 };
-const PUP_BED_PORTRAIT: HotspotPos = { x: 5.81, y: 72.78, w: 8.89, h: 4.98 };
+// The pup bed is GONE as of the D&B Floor Plan render (Diviyaj, 14 Oct 2026):
+// the new office has no bed, and the old hotspot sat squarely on the DOOR.
+// Dogs are unaffected. They have shared their owner's desk since v2.4.0, and
+// admins can still clear an orphaned dog by clicking its desk (App.tsx ~312).
+// What goes with it is the dedicated "book a dog with no desk" entry point.
 
 // Portrait hotspots — calibrated visually with the in-app Hot tool against the
 // new green-mat mobile floor plan (897×1754).
@@ -131,7 +131,6 @@ export const DeskLayoutMap: React.FC<DeskLayoutMapProps> = ({
   teamMembers,
   activeMemberId,
   onDeskClick,
-  onPupBedClick,
   searchQuery,
   isAdmin = false,
   headerExtra,
@@ -139,6 +138,7 @@ export const DeskLayoutMap: React.FC<DeskLayoutMapProps> = ({
   const [hoveredDesk, setHoveredDesk] = useState<number | null>(null);
   const containerRef = React.useRef<HTMLDivElement>(null);
   const imageWrapperRef = React.useRef<HTMLDivElement>(null);
+  const scrollRef = React.useRef<HTMLDivElement>(null);
   const [zoom, setZoom] = useState<number>(1);
   const [autoFit, setAutoFit] = useState<boolean>(true);
 
@@ -156,14 +156,11 @@ export const DeskLayoutMap: React.FC<DeskLayoutMapProps> = ({
   const usePortrait = isMobile && PORTRAIT_READY;
   const orientation: 'portrait' | 'landscape' = usePortrait ? 'portrait' : 'landscape';
   const imgSrc = usePortrait ? floorPlanPortrait : floorPlanLandscape;
-  const imgWidth = usePortrait ? 897 : 2560;
-  const imgHeight = usePortrait ? 1754 : 1093;
-  // Pup-bed hotspot lives in livePositions under sentinel id 0 so it participates
-  // in the same drag/resize/persist/export pipeline as the desks.
-  const defaultPupBed = usePortrait ? PUP_BED_PORTRAIT : PUP_BED_LANDSCAPE;
+  const imgWidth = usePortrait ? 897 : 2750;
+  const imgHeight = usePortrait ? 1754 : 1536;
   const defaultHotspots = React.useMemo(
-    () => ({ ...(usePortrait ? PORTRAIT_HOTSPOTS : LANDSCAPE_HOTSPOTS), 0: defaultPupBed }),
-    [usePortrait, defaultPupBed],
+    () => (usePortrait ? PORTRAIT_HOTSPOTS : LANDSCAPE_HOTSPOTS),
+    [usePortrait],
   );
   const storageKey = usePortrait ? STORAGE_KEY_PORTRAIT : STORAGE_KEY_LANDSCAPE;
 
@@ -303,6 +300,23 @@ export const DeskLayoutMap: React.FC<DeskLayoutMapProps> = ({
     return () => resizeObserver.disconnect();
   }, [autoFit, imgWidth, imgHeight]);
 
+  // Land the view on the desk banks without trapping the top of the plan.
+  //
+  // The plan is width-anchored at its true aspect ratio, so at 100% it is
+  // taller than the card. `align-items: center` centred it but made the top
+  // UNREACHABLE: flex centring pushes half the overflow above the scroll
+  // origin and scrollTop cannot go negative, so you could scroll down to the
+  // door but never up to the sign without zooming out to 80% first.
+  //
+  // Top-aligning and setting scrollTop to the midpoint gives the same centred
+  // landing with the whole plan reachable in both directions.
+  React.useLayoutEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const overflow = el.scrollHeight - el.clientHeight;
+    if (overflow > 0) el.scrollTop = overflow / 2;
+  }, [zoom, imgSrc, isMobile, imgWidth, imgHeight]);
+
   const dogIds = React.useMemo(
     () => new Set(teamMembers.filter((m) => m.isDog).map((m) => m.id)),
     [teamMembers],
@@ -333,14 +347,6 @@ export const DeskLayoutMap: React.FC<DeskLayoutMapProps> = ({
   }, [bookings, activeDay, dogIds, teamMembers]);
 
   const getMemberById = (id: string) => teamMembers.find((m) => m.id === id);
-
-  // Dogs on the PUP BED today (desk-sitting dogs show on their desk instead)
-  const bookedDogs = React.useMemo(() => {
-    return bookings
-      .filter((b) => b.day === activeDay && b.status === 'booked' && b.deskId === null)
-      .map((b) => teamMembers.find((m) => m.id === b.memberId))
-      .filter((m): m is TeamMember => !!m && !!m.isDog);
-  }, [bookings, activeDay, teamMembers]);
 
   const doesDeskMatchSearch = (deskId: number) => {
     if (!searchQuery) return false;
@@ -558,18 +564,38 @@ export const DeskLayoutMap: React.FC<DeskLayoutMapProps> = ({
         ref={containerRef}
         className="relative flex-1 min-h-0 w-full overflow-hidden bg-transparent md:bg-slate-50 md:border md:border-slate-200 md:rounded-xl flex items-center justify-center"
       >
-        {/* Scrollable image wrapper */}
-        <div className="w-full h-full overflow-auto flex items-start md:items-center justify-center">
+        {/* Scrollable image wrapper. The plan is width-anchored and keeps its
+            true aspect ratio, so it runs taller than the card: the card shows
+            a band of it and you scroll up/down for the rest. Top-aligned on
+            purpose, with the scroll position centred in the effect above. */}
+        <div
+          ref={scrollRef}
+          className="w-full h-full overflow-auto flex items-start justify-center"
+        >
           <div
             ref={imageWrapperRef}
-            className={`relative shrink-0 max-w-full ${isMobile ? '' : 'max-h-full'}`}
+            className="relative shrink-0 max-w-full"
             style={{
-              // On mobile (portrait image), width-anchor so the floor plan fills
-              // the full screen width (crops the decorative top/bottom margin a
-              // touch). On desktop (landscape), width-anchor as before.
-              ...(isMobile
-                ? { width: `${zoom * 100}%` }
-                : { width: `${zoom * 100}%`, maxWidth: `${zoom * 100}%` }),
+              // Width-anchored on every breakpoint, with NO max-height.
+              //
+              // There used to be a `max-h-full` here and it was a silent bug.
+              // CSS drops `aspect-ratio` the moment `max-height` clamps the
+              // box, and the <img> inside is w-full/h-full with no object-fit,
+              // so it stretched to fill the clamped box: the plan rendered at
+              // 2.38 against the image's true 1.79, squashing it vertically by
+              // about 25%. Hotspots still lined up, because they are
+              // percentages of the same squashed box, so it LOOKED aligned
+              // while every desk mat was visibly wider than tall.
+              //
+              // Anchoring on height instead would keep the ratio but letterbox
+              // the plan with ~240px of dead gutter either side. So: stay
+              // width-anchored and drop the max-height, which lets
+              // `aspect-ratio` survive and set a box taller than the card. The
+              // parent scrolls it (see the centring effect above). Full width,
+              // true proportions, whole plan reachable. Hotspots stay correct
+              // because the box is still the image's real geometry, which is
+              // exactly what object-cover would have broken.
+              width: `${zoom * 100}%`,
               aspectRatio: `${imgWidth} / ${imgHeight}`,
               transition: 'width 0.15s ease-out, height 0.15s ease-out',
             }}
@@ -587,86 +613,6 @@ export const DeskLayoutMap: React.FC<DeskLayoutMapProps> = ({
 
             {/* Desk hotspots */}
             {desks.map((desk) => renderDesk(desk))}
-
-            {/* Pup-bed clickable hotspot — sentinel id 0 in livePositions */}
-            {(() => {
-              const pos = livePositions[0];
-              if (!pos) return null;
-              const isEditing = showHotspots;
-              const isHovered = hoveredDesk === 0;
-              return (
-                <div
-                  key="pup-bed"
-                  id="desk-0"
-                  onMouseEnter={() => setHoveredDesk(0)}
-                  onMouseLeave={() => setHoveredDesk(null)}
-                  onPointerDown={(e) => isEditing && startDrag(e, 0, 'move')}
-                  onClick={(e) => {
-                    if (isEditing) {
-                      e.stopPropagation();
-                      return;
-                    }
-                    onPupBedClick();
-                  }}
-                  className={`absolute group ${isEditing ? 'cursor-move' : 'cursor-pointer'}`}
-                  style={{
-                    left: `${pos.x - pos.w / 2}%`,
-                    top: `${pos.y - pos.h / 2}%`,
-                    width: `${pos.w}%`,
-                    height: `${pos.h}%`,
-                    touchAction: isEditing ? 'none' : 'auto',
-                  }}
-                  title="Book the pup bed"
-                  aria-label="Book the pup bed"
-                >
-                  <div
-                    className={`absolute inset-0 rounded-2xl transition-all duration-200 ease-out ${
-                      isHovered && !isEditing
-                        ? 'ring-2 ring-amber-400 bg-amber-200/25 scale-[1.04] shadow-md'
-                        : isEditing
-                          ? 'ring-1 ring-dashed ring-red-500/70 bg-red-500/10'
-                          : ''
-                    }`}
-                  />
-                  {isEditing && (
-                    <div
-                      onPointerDown={(e) => startDrag(e, 0, 'resize')}
-                      onClick={(e) => e.stopPropagation()}
-                      className="absolute -right-1.5 -bottom-1.5 w-3 h-3 bg-red-500 border border-white rounded-sm shadow z-20"
-                      style={{ cursor: 'nwse-resize', touchAction: 'none' }}
-                      title="Drag to resize"
-                    />
-                  )}
-                  <div className="absolute top-0.5 left-0.5 pointer-events-none">
-                    <span className="inline-flex items-center justify-center text-[11px] leading-none bg-white/85 backdrop-blur-sm rounded px-1 py-0.5 shadow-sm">
-                      🐾
-                    </span>
-                  </div>
-                  {isHovered && !isEditing && (
-                    <div className="absolute left-1/2 -translate-x-1/2 -top-2 -translate-y-full bg-slate-900 text-white rounded-lg shadow-xl z-50 pointer-events-none whitespace-nowrap px-2.5 py-1.5">
-                      {bookedDogs.length > 0 ? (
-                        <>
-                          <p className="text-[11px] font-semibold leading-tight">
-                            {bookedDogs.map((d) => d.name).join(', ')}
-                          </p>
-                          <p className="text-[9px] text-slate-400 leading-tight mt-0.5">
-                            Pup bed · click to manage
-                          </p>
-                        </>
-                      ) : (
-                        <>
-                          <p className="text-[11px] font-semibold leading-tight">Pup bed</p>
-                          <p className="text-[9px] text-slate-400 leading-tight mt-0.5">
-                            <span className="text-emerald-400">Vacant</span> · click to book a pup
-                          </p>
-                        </>
-                      )}
-                      <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-2.5 h-2.5 bg-slate-900 rotate-45" />
-                    </div>
-                  )}
-                </div>
-              );
-            })()}
 
             {/* Export dialog — fallback for when clipboard API isn't available (mobile non-HTTPS) */}
             {exportText && (
@@ -714,32 +660,6 @@ export const DeskLayoutMap: React.FC<DeskLayoutMapProps> = ({
               </div>
             )}
 
-            {/* Pup-bed live indicator — names floating on the bed.
-                Hidden by default (would block the dog photo); appears on hover only.
-                The pup-bed hotspot tooltip also shows the names. */}
-            {bookedDogs.length > 0 && livePositions[0] && hoveredDesk === 0 && (
-              <div
-                className="absolute -translate-x-1/2 -translate-y-1/2 pointer-events-none"
-                style={{ left: `${livePositions[0].x}%`, top: `${livePositions[0].y}%` }}
-              >
-                <div className="flex items-center gap-1 bg-white/95 backdrop-blur-sm px-2 py-1 rounded-full shadow-sm border border-amber-200">
-                  {bookedDogs.map((dog) => {
-                    const isSelected = activeMemberId === dog.id;
-                    return (
-                      <span
-                        key={dog.id}
-                        className={`text-[10px] font-semibold leading-none px-1 ${
-                          isSelected ? 'text-amber-700' : 'text-slate-700'
-                        }`}
-                        title={dog.name}
-                      >
-                        {dog.name}
-                      </span>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
           </div>
         </div>
       </div>
