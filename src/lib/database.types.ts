@@ -44,6 +44,7 @@ export type Database = {
           number: number;
           type: DeskType;
           table_name: 'left' | 'middle' | 'right';
+          archived: boolean;
           row: number;
           col: 'left' | 'right';
         };
@@ -52,6 +53,7 @@ export type Database = {
           number: number;
           type: DeskType;
           table_name: 'left' | 'middle' | 'right';
+          archived: boolean;
           row: number;
           col: 'left' | 'right';
         };
@@ -60,6 +62,7 @@ export type Database = {
           number?: number;
           type?: DeskType;
           table_name?: 'left' | 'middle' | 'right';
+          archived?: boolean;
           row?: number;
           col?: 'left' | 'right';
         };

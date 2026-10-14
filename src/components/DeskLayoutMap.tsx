@@ -10,8 +10,12 @@ type HotspotPos = { x: number; y: number; w: number; h: number };
 // (pup bed + desks 14–17 refined). Bump the key on EVERY committed
 // recalibration — all browsers persist positions, so without the bump
 // they'd shadow the new defaults. Portrait stays v2 (image unchanged).
-const STORAGE_KEY_LANDSCAPE = 'desk_hotspot_positions_landscape_v5';
+const STORAGE_KEY_LANDSCAPE = 'desk_hotspot_positions_landscape_v6_newoffice';
 const STORAGE_KEY_PORTRAIT = 'desk_hotspot_positions_portrait_v2';
+
+// Portrait render of the NEW office not supplied yet — see the usePortrait
+// comment below. Flip to true in the same commit that ships the new image.
+const PORTRAIT_READY = false;
 
 interface DeskLayoutMapProps {
   activeDay: DayOfWeek;
@@ -31,52 +35,53 @@ interface DeskLayoutMapProps {
 }
 
 // Position of each desk as percentage of the image. (x, y) is centre, (w, h) is size.
-// Two sets: landscape image for desktop (1916×821), portrait image for mobile (941×1672).
-// Both are calibrated visually with the in-app Hot/drag/resize tool when Hot is on.
+// Landscape image for desktop (2560x1093), portrait image for mobile.
+//
+// LANDSCAPE was DETECTED, not hand-dragged: a script masked the green desk mats
+// in the render, flood-filled the blobs and emitted these percentages. 26 mats
+// found, grouping 4+4 / 4+4 / 5+5 exactly as the new office plan specifies.
+// Re-run scripts/detect-desks.py on any future render instead of calibrating.
+// NOTE: keys are DESK IDs, not desk numbers. The new-office desks live at
+// ids 101-126 (numbers 1-26) because the old 30 are archived, not deleted:
+// 512 bookings still FK to desks(id). See supabase/09_new_office_desks.sql.
 const LANDSCAPE_HOTSPOTS: Record<number, HotspotPos> = {
-  // Calibrated by Diviyaj 2026-06-07 (second pass) against the door+windows
-  // floor plan.
-  // TABLE A (left, 10 desks, 5 rows × 2 cols)
-  5:  { x: 18.39, y: 22.77, w: 5.27, h: 10.04 }, // no-screen top
-  6:  { x: 25.95, y: 22.72, w: 5.18, h: 10.35 }, // no-screen top
-  4:  { x: 18.38, y: 34.37, w: 5.23, h: 10.05 },
-  7:  { x: 25.87, y: 34.39, w: 5.19, h: 10.15 },
-  3:  { x: 18.27, y: 45.85, w: 5.25, h: 10.25 },
-  8:  { x: 25.82, y: 45.82, w: 5.22, h: 10.15 }, // design
-  2:  { x: 18.24, y: 57.20, w: 5.18, h: 9.89 },
-  9:  { x: 25.78, y: 57.17, w: 5.29, h: 9.97 },
-  1:  { x: 18.19, y: 68.67, w: 5.25, h: 10.23 },
-  10: { x: 25.72, y: 68.68, w: 5.25, h: 10.28 },
+  // TABLE A - 8 desks
+  101: { x: 18.32, y: 31.02, w: 5.59, h: 10.70 },
+  102: { x: 18.22, y: 42.68, w: 5.62, h: 10.80 },
+  103: { x: 18.12, y: 54.35, w: 5.59, h: 10.70 },
+  104: { x: 18.03, y: 66.10, w: 5.62, h: 11.16 },
+  105: { x: 25.66, y: 66.10, w: 5.66, h: 11.16 },
+  106: { x: 25.76, y: 54.35, w: 5.62, h: 10.70 },
+  107: { x: 25.82, y: 42.73, w: 5.59, h: 10.70 },
+  108: { x: 25.88, y: 31.15, w: 5.55, h: 10.80 },
 
-  // TABLE B (middle, 8 desks, 4 rows × 2 cols)
-  14: { x: 46.67, y: 26.07, w: 5.04, h: 10.92 }, // no-screen top
-  15: { x: 54.26, y: 26.17, w: 5.39, h: 11.03 }, // no-screen top
-  13: { x: 46.65, y: 38.02, w: 5.30, h: 10.59 },
-  16: { x: 54.31, y: 37.99, w: 5.45, h: 9.96 }, // design
-  12: { x: 46.73, y: 49.72, w: 5.36, h: 11.02 }, // design
-  17: { x: 54.18, y: 49.63, w: 5.34, h: 10.79 },
-  11: { x: 46.70, y: 61.99, w: 5.30, h: 11.27 },
-  18: { x: 54.27, y: 61.94, w: 5.49, h: 10.90 }, // design
+  // TABLE B - 8 desks
+  109: { x: 46.68, y: 27.08, w: 5.59, h: 11.44 },
+  110: { x: 46.66, y: 39.16, w: 5.62, h: 10.89 },
+  111: { x: 46.66, y: 51.28, w: 5.62, h: 11.53 },
+  112: { x: 46.64, y: 63.68, w: 5.66, h: 11.62 },
+  113: { x: 54.41, y: 63.68, w: 5.74, h: 11.62 },
+  114: { x: 54.39, y: 51.33, w: 5.70, h: 11.44 },
+  115: { x: 54.36, y: 39.20, w: 5.70, h: 10.98 },
+  116: { x: 54.37, y: 27.13, w: 5.74, h: 11.34 },
 
-  // TABLE C (right, 12 desks, 6 rows × 2 cols)
-  24: { x: 76.48, y: 18.47, w: 5.22, h: 10.41 }, // no-screen top
-  25: { x: 83.93, y: 18.40, w: 5.23, h: 10.29 }, // no-screen top
-  23: { x: 76.54, y: 29.57, w: 5.16, h: 9.98 }, // no-screen
-  26: { x: 84.07, y: 29.69, w: 5.19, h: 10.06 },
-  22: { x: 76.58, y: 41.17, w: 5.42, h: 10.70 },
-  27: { x: 84.12, y: 41.17, w: 5.37, h: 9.82 },
-  21: { x: 76.65, y: 52.66, w: 5.26, h: 10.01 }, // design
-  28: { x: 84.28, y: 53.03, w: 5.36, h: 9.97 },
-  20: { x: 76.65, y: 64.44, w: 5.28, h: 10.42 },
-  29: { x: 84.30, y: 64.32, w: 5.43, h: 10.43 },
-  19: { x: 76.67, y: 76.41, w: 5.49, h: 11.17 },
-  30: { x: 84.49, y: 76.56, w: 5.53, h: 11.27 },
+  // TABLE C - 10 desks
+  117: { x: 77.30, y: 30.74, w: 5.66, h: 10.70 },
+  118: { x: 77.34, y: 42.41, w: 5.66, h: 10.98 },
+  119: { x: 77.42, y: 54.30, w: 5.74, h: 10.98 },
+  120: { x: 77.46, y: 66.19, w: 5.74, h: 11.16 },
+  121: { x: 77.56, y: 78.50, w: 5.78, h: 11.80 },
+  122: { x: 85.45, y: 78.68, w: 5.86, h: 11.80 },
+  123: { x: 85.33, y: 66.33, w: 5.86, h: 11.07 },
+  124: { x: 85.21, y: 54.39, w: 5.78, h: 10.98 },
+  125: { x: 85.10, y: 42.54, w: 5.70, h: 10.89 },
+  126: { x: 84.98, y: 30.88, w: 5.70, h: 10.61 },
 };
 
 // Pup-bed clickable hotspot — same HotspotPos shape as desks so it can be
 // calibrated with the in-app Hot tool (sentinel id 0 in livePositions below).
 // Click opens the booking modal in "pup-booking" mode (dogs only, no desk).
-const PUP_BED_LANDSCAPE: HotspotPos = { x: 50.33, y: 84.44, w: 7.09, h: 7.92 };
+const PUP_BED_LANDSCAPE: HotspotPos = { x: 49.60, y: 87.00, w: 8.20, h: 11.50 };
 const PUP_BED_PORTRAIT: HotspotPos = { x: 5.81, y: 72.78, w: 8.89, h: 4.98 };
 
 // Portrait hotspots — calibrated visually with the in-app Hot tool against the
@@ -137,20 +142,30 @@ export const DeskLayoutMap: React.FC<DeskLayoutMapProps> = ({
   const [zoom, setZoom] = useState<number>(1);
   const [autoFit, setAutoFit] = useState<boolean>(true);
 
-  // Mobile vs desktop. Desktop keeps the landscape image untouched; mobile uses the portrait one.
+  // Mobile vs desktop. Desktop keeps the landscape image untouched; mobile uses
+  // the portrait one — but ONLY once a portrait render of the NEW office exists.
+  //
+  // PORTRAIT_READY is false: floor-plan-mobile.webp is still the OLD office and
+  // PORTRAIT_HOTSPOTS are keyed to the archived desks (ids 1-30), so using them
+  // now would show the wrong room with no clickable desks. Until the portrait
+  // render lands, phones get the landscape image scaled down — correct layout,
+  // just smaller. To re-enable: drop in the new portrait render, re-run
+  // scripts/detect-desks.py on it, paste the result into PORTRAIT_HOTSPOTS with
+  // ids 101-126, bump STORAGE_KEY_PORTRAIT, and flip this to true.
   const isMobile = useIsMobile();
-  const orientation: 'portrait' | 'landscape' = isMobile ? 'portrait' : 'landscape';
-  const imgSrc = isMobile ? floorPlanPortrait : floorPlanLandscape;
-  const imgWidth = isMobile ? 897 : 1918;
-  const imgHeight = isMobile ? 1754 : 820;
+  const usePortrait = isMobile && PORTRAIT_READY;
+  const orientation: 'portrait' | 'landscape' = usePortrait ? 'portrait' : 'landscape';
+  const imgSrc = usePortrait ? floorPlanPortrait : floorPlanLandscape;
+  const imgWidth = usePortrait ? 897 : 2560;
+  const imgHeight = usePortrait ? 1754 : 1093;
   // Pup-bed hotspot lives in livePositions under sentinel id 0 so it participates
   // in the same drag/resize/persist/export pipeline as the desks.
-  const defaultPupBed = isMobile ? PUP_BED_PORTRAIT : PUP_BED_LANDSCAPE;
+  const defaultPupBed = usePortrait ? PUP_BED_PORTRAIT : PUP_BED_LANDSCAPE;
   const defaultHotspots = React.useMemo(
-    () => ({ ...(isMobile ? PORTRAIT_HOTSPOTS : LANDSCAPE_HOTSPOTS), 0: defaultPupBed }),
-    [isMobile, defaultPupBed],
+    () => ({ ...(usePortrait ? PORTRAIT_HOTSPOTS : LANDSCAPE_HOTSPOTS), 0: defaultPupBed }),
+    [usePortrait, defaultPupBed],
   );
-  const storageKey = isMobile ? STORAGE_KEY_PORTRAIT : STORAGE_KEY_LANDSCAPE;
+  const storageKey = usePortrait ? STORAGE_KEY_PORTRAIT : STORAGE_KEY_LANDSCAPE;
 
   // Calibration mode is gated by `?calibrate=1` in the URL. End users never see it.
   // Append `?calibrate=1` to any URL to re-enable the Hot drag/resize toolbar
